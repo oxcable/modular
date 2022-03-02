@@ -101,3 +101,8 @@ impl Default for SchmittTrigger {
         SchmittTrigger::new(2.0, 0.1)
     }
 }
+
+/// Converts a midi note number to a 1V/Octave voltage.
+pub fn midi_to_voltage(midi_note: u8) -> f32 {
+    (midi_note as f32 - 60.0) / 12.0
+}

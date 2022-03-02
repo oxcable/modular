@@ -1,4 +1,8 @@
-use rack::{utils::SchmittTrigger, voltage::Voltage, Module, ModuleIO};
+use rack::{
+    utils::{midi_to_voltage, SchmittTrigger},
+    voltage::Voltage,
+    Module, ModuleIO,
+};
 
 pub struct Sequencer {
     trigger: SchmittTrigger,
@@ -20,7 +24,7 @@ impl Sequencer {
         assert!(!notes.is_empty());
         Sequencer {
             trigger: SchmittTrigger::default(),
-            notes: notes.iter().copied().map(midi_to_cv).collect(),
+            notes: notes.iter().copied().map(midi_to_voltage).collect(),
             position: notes.len() - 1,
         }
     }
@@ -35,8 +39,4 @@ impl Module for Sequencer {
         }
         outputs[Self::V_OCT_OUT] = self.notes[self.position];
     }
-}
-
-fn midi_to_cv(midi_note: u8) -> f32 {
-    (midi_note as f32 - 60.0) / 12.0
 }
