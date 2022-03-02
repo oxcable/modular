@@ -1,4 +1,6 @@
-pub type Voltage = f32;
+pub mod voltage;
+
+use voltage::Voltage;
 
 pub trait ModuleIO {
     const INPUTS: usize;
@@ -92,7 +94,7 @@ impl Rack {
         }
     }
 
-    pub fn tick(&mut self) -> f32 {
+    pub fn tick(&mut self) -> Voltage {
         // First propogate voltages through all patch cables. All signals take 1 sample to
         // propogate. This simplifies routing and enables feedback and circular patches.
         for (src, dst) in self.patch_cables.iter() {

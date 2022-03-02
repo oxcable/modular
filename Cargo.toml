@@ -1,2 +1,6 @@
 [workspace]
-members = ["rack", "main"]
+members = [
+    "oscillators",
+    "rack",
+    "main",
+]
