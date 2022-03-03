@@ -11,7 +11,7 @@ use rack::{voltage::AUDIO_VOLTS, Rack};
 fn main() -> anyhow::Result<()> {
     let mut rack = Rack::new();
     let vco = rack.add_module(VCO::new());
-    rack.connect(vco.output(VCO::TRI_OUT), rack.audio_output())?;
+    rack.connect(vco.output(VCO::SAW_OUT), rack.audio_output())?;
 
     let host = cpal::default_host();
     let device = host
