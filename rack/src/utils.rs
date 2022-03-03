@@ -1,4 +1,4 @@
-use crate::voltage::CV_VOLTS;
+use crate::voltage::{Voltage, CV_VOLTS};
 
 /// A utility for managing sample durations across resets.
 #[derive(Debug)]
@@ -63,5 +63,41 @@ impl PulseGenerator {
         } else {
             0.0
         }
+    }
+}
+
+/// A utility for detecting triggers.
+#[derive(Debug)]
+pub struct SchmittTrigger {
+    trigger_threshold: f32,
+    reset_threshold: f32,
+    active: bool,
+}
+
+impl SchmittTrigger {
+    /// Creates a new trigger using the provided thresholds.
+    pub fn new(trigger_threshold: f32, reset_threshold: f32) -> Self {
+        Self {
+            trigger_threshold,
+            reset_threshold,
+            active: false,
+        }
+    }
+
+    /// Consumes the voltage, and indicates whether a new trigger was detected.
+    pub fn detect(&mut self, v: Voltage) -> bool {
+        if self.active {
+            self.active = v >= self.reset_threshold;
+            false
+        } else {
+            self.active = v >= self.trigger_threshold;
+            self.active
+        }
+    }
+}
+
+impl Default for SchmittTrigger {
+    fn default() -> Self {
+        SchmittTrigger::new(2.0, 0.1)
     }
 }

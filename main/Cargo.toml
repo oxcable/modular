@@ -8,3 +8,5 @@ anyhow = "1.0"
 cpal = "0.13.4"
 oscillators = { path = "../oscillators/" }
 rack = { path = "../rack/" }
+sequencer = { path = "../sequencer/" }
+utility_modules = { path = "../utility_modules/" }
