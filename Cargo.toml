@@ -2,5 +2,6 @@
 members = [
     "oscillators",
     "rack",
+    "utility_modules",
     "main",
 ]
