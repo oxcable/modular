@@ -8,7 +8,7 @@ use cpal::{
 use oscillators::VCO;
 use rack::{voltage::AUDIO_VOLTS, Rack};
 use sequencer::Sequencer;
-use utility_modules::clock::Clock;
+use utility_modules::{amplifier::VCA, clock::Clock, envelope::ADSR};
 
 fn main() -> anyhow::Result<()> {
     let mut rack = Rack::new();
@@ -17,6 +17,8 @@ fn main() -> anyhow::Result<()> {
         61, 65, 68, 77, 61, 65, 68, 75, 61, 65, 68, 78, 78, 73, 73, 73,
     ]));
     let vco = rack.add_module(VCO::new());
+    let adsr = rack.add_module(ADSR::default());
+    let vca = rack.add_module(VCA::default());
     rack.connect(
         clock.output(Clock::TRIGGER_OUT),
         sequencer.input(Sequencer::TRIGGER_IN),
@@ -25,7 +27,10 @@ fn main() -> anyhow::Result<()> {
         sequencer.output(Sequencer::V_OCT_OUT),
         vco.input(VCO::V_OCT_IN),
     )?;
-    rack.connect(vco.output(VCO::SAW_OUT), rack.audio_output())?;
+    rack.connect(clock.output(Clock::TRIGGER_OUT), adsr.input(ADSR::GATE_IN))?;
+    rack.connect(adsr.output(ADSR::CV_OUT), vca.input(VCA::CV_IN))?;
+    rack.connect(vco.output(VCO::SAW_OUT), vca.input(VCA::AUDIO_IN))?;
+    rack.connect(vca.output(VCA::AUDIO_OUT), rack.audio_output())?;
 
     let host = cpal::default_host();
     let device = host

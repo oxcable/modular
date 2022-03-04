@@ -1,12 +1,11 @@
 use rack::{
-    utils::{Duration, PulseGenerator},
-    voltage::Voltage,
+    utils::Duration,
+    voltage::{Voltage, CV_VOLTS},
     Module, ModuleIO,
 };
 
 pub struct Clock {
-    beat_duration: Duration,
-    pulse: PulseGenerator,
+    period: Duration,
     ticks: usize,
 }
 
@@ -20,8 +19,7 @@ impl Clock {
 
     pub fn new(bpm: f32) -> Self {
         Clock {
-            beat_duration: Duration::new(60.0 / bpm),
-            pulse: PulseGenerator::for_triggers(),
+            period: Duration::new(60.0 / bpm),
             ticks: 0,
         }
     }
@@ -29,15 +27,16 @@ impl Clock {
 
 impl Module for Clock {
     fn reset(&mut self, sample_rate: usize) {
-        self.beat_duration.reset(sample_rate);
-        self.pulse.reset(sample_rate);
+        self.period.reset(sample_rate);
     }
 
     fn tick(&mut self, _inputs: &[Option<Voltage>], outputs: &mut [Voltage]) {
-        if self.ticks == 0 {
-            self.pulse.trigger();
-        }
-        self.ticks = (self.ticks + 1) % self.beat_duration.samples();
-        outputs[Self::TRIGGER_OUT] = self.pulse.tick();
+        let period = self.period.samples();
+        self.ticks = (self.ticks + 1) % period;
+        outputs[Self::TRIGGER_OUT] = if self.ticks < period / 2 {
+            CV_VOLTS
+        } else {
+            0.0
+        };
     }
 }
