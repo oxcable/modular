@@ -6,7 +6,7 @@ use cpal::{
     BufferSize,
 };
 use filters::VCF;
-use oscillators::VCO;
+use oscillators::{LFO, VCO};
 use rack::{voltage::AUDIO_VOLTS, Rack};
 use sequencer::Sequencer;
 use utility_modules::{amplifier::VCA, clock::Clock, envelope::ADSR};
@@ -17,6 +17,7 @@ fn main() -> anyhow::Result<()> {
     let sequencer = rack.add_module(Sequencer::new(&[
         61, 65, 68, 77, 61, 65, 68, 75, 61, 65, 68, 78, 78, 73, 73, 73,
     ]));
+    let lfo = rack.add_module(LFO::new(0.1));
     let vco = rack.add_module(VCO::new());
     let adsr = rack.add_module(ADSR::default());
     let vca = rack.add_module(VCA::default());
@@ -33,7 +34,7 @@ fn main() -> anyhow::Result<()> {
     rack.connect(adsr.output(ADSR::CV_OUT), vca.input(VCA::CV_IN))?;
     rack.connect(vco.output(VCO::SAW_OUT), vca.input(VCA::AUDIO_IN))?;
     rack.connect(vca.output(VCA::AUDIO_OUT), vcf.input(VCF::AUDIO_IN))?;
-    rack.connect(adsr.output(ADSR::CV_OUT), vcf.input(VCF::CUTOFF_IN))?;
+    rack.connect(lfo.output(LFO::TRI_OUT), vcf.input(VCF::CUTOFF_IN))?;
     rack.connect(vcf.output(VCF::LOWPASS_OUT), rack.audio_output())?;
 
     let host = cpal::default_host();
