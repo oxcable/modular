@@ -5,6 +5,7 @@ use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     BufferSize,
 };
+use filters::VCF;
 use oscillators::VCO;
 use rack::{voltage::AUDIO_VOLTS, Rack};
 use sequencer::Sequencer;
@@ -19,6 +20,7 @@ fn main() -> anyhow::Result<()> {
     let vco = rack.add_module(VCO::new());
     let adsr = rack.add_module(ADSR::default());
     let vca = rack.add_module(VCA::default());
+    let vcf = rack.add_module(VCF::new(1000.0, 2.0));
     rack.connect(
         clock.output(Clock::TRIGGER_OUT),
         sequencer.input(Sequencer::TRIGGER_IN),
@@ -30,7 +32,9 @@ fn main() -> anyhow::Result<()> {
     rack.connect(clock.output(Clock::TRIGGER_OUT), adsr.input(ADSR::GATE_IN))?;
     rack.connect(adsr.output(ADSR::CV_OUT), vca.input(VCA::CV_IN))?;
     rack.connect(vco.output(VCO::SAW_OUT), vca.input(VCA::AUDIO_IN))?;
-    rack.connect(vca.output(VCA::AUDIO_OUT), rack.audio_output())?;
+    rack.connect(vca.output(VCA::AUDIO_OUT), vcf.input(VCF::AUDIO_IN))?;
+    rack.connect(adsr.output(ADSR::CV_OUT), vcf.input(VCF::CUTOFF_IN))?;
+    rack.connect(vcf.output(VCF::LOWPASS_OUT), rack.audio_output())?;
 
     let host = cpal::default_host();
     let device = host

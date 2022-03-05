@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 cpal = "0.13.4"
+filters = { path = "../filters/" }
 oscillators = { path = "../oscillators/" }
 rack = { path = "../rack/" }
 sequencer = { path = "../sequencer/" }
