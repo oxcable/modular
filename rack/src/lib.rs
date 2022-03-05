@@ -60,7 +60,7 @@ impl Rack {
         }
     }
 
-    pub fn audio_output(&self) -> ModuleInput {
+    pub fn audio_output() -> ModuleInput {
         AUDIO_OUTPUT_HANDLE.input(0)
     }
 
@@ -90,7 +90,7 @@ impl Rack {
     }
 
     pub fn reset(&mut self, sample_rate: usize) {
-        for module in self.modules.iter_mut() {
+        for module in &mut self.modules {
             module.module.reset(sample_rate);
         }
     }
@@ -98,12 +98,12 @@ impl Rack {
     pub fn tick(&mut self) -> Voltage {
         // First propogate voltages through all patch cables. All signals take 1 sample to
         // propogate. This simplifies routing and enables feedback and circular patches.
-        for (src, dst) in self.patch_cables.iter() {
+        for (src, dst) in &self.patch_cables {
             let v = self.modules[src.module].outputs[src.channel];
             self.modules[dst.module].inputs[dst.channel] = Some(v);
         }
 
-        for module in self.modules.iter_mut() {
+        for module in &mut self.modules {
             module.module.tick(&module.inputs, &mut module.outputs);
         }
 

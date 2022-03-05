@@ -45,7 +45,7 @@ impl PulseGenerator {
         PulseGenerator::with_duration(1.0)
     }
 
-    /// Resets the PulseGenerator.
+    /// Resets the `PulseGenerator` for the new config.
     pub fn reset(&mut self, sample_rate: usize) {
         self.duration.reset(sample_rate);
     }

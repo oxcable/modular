@@ -13,29 +13,31 @@ use utility_modules::{amplifier::VCA, clock::Clock, envelope::ADSR};
 
 fn main() -> anyhow::Result<()> {
     let mut rack = Rack::new();
+
     let clock = rack.add_module(Clock::new(180.0));
     let sequencer = rack.add_module(Sequencer::new(&[
         61, 65, 68, 77, 61, 65, 68, 75, 61, 65, 68, 78, 78, 73, 73, 73,
     ]));
     let lfo = rack.add_module(LFO::new(0.1));
-    let vco = rack.add_module(VCO::new());
+    let osc = rack.add_module(VCO::new());
     let adsr = rack.add_module(ADSR::default());
-    let vca = rack.add_module(VCA::default());
-    let vcf = rack.add_module(VCF::new(1000.0, 2.0));
+    let amp = rack.add_module(VCA::default());
+    let filter = rack.add_module(VCF::new(1000.0, 2.0));
+
     rack.connect(
         clock.output(Clock::TRIGGER_OUT),
         sequencer.input(Sequencer::TRIGGER_IN),
     )?;
     rack.connect(
         sequencer.output(Sequencer::V_OCT_OUT),
-        vco.input(VCO::V_OCT_IN),
+        osc.input(VCO::V_OCT_IN),
     )?;
     rack.connect(clock.output(Clock::TRIGGER_OUT), adsr.input(ADSR::GATE_IN))?;
-    rack.connect(adsr.output(ADSR::CV_OUT), vca.input(VCA::CV_IN))?;
-    rack.connect(vco.output(VCO::SAW_OUT), vca.input(VCA::AUDIO_IN))?;
-    rack.connect(vca.output(VCA::AUDIO_OUT), vcf.input(VCF::AUDIO_IN))?;
-    rack.connect(lfo.output(LFO::TRI_OUT), vcf.input(VCF::CUTOFF_IN))?;
-    rack.connect(vcf.output(VCF::LOWPASS_OUT), rack.audio_output())?;
+    rack.connect(adsr.output(ADSR::CV_OUT), amp.input(VCA::CV_IN))?;
+    rack.connect(osc.output(VCO::SAW_OUT), amp.input(VCA::AUDIO_IN))?;
+    rack.connect(amp.output(VCA::AUDIO_OUT), filter.input(VCF::AUDIO_IN))?;
+    rack.connect(lfo.output(LFO::TRI_OUT), filter.input(VCF::CUTOFF_IN))?;
+    rack.connect(filter.output(VCF::LOWPASS_OUT), Rack::audio_output())?;
 
     let host = cpal::default_host();
     let device = host
@@ -58,6 +60,6 @@ fn main() -> anyhow::Result<()> {
     stream.play()?;
 
     let mut buf = [0];
-    let _ = stdin().read(&mut buf);
+    stdin().read_exact(&mut buf)?;
     Ok(())
 }

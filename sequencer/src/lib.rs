@@ -16,11 +16,11 @@ impl Sequencer {
 
     pub const V_OCT_OUT: usize = 0;
 
-    pub fn new(notes: &[u32]) -> Self {
+    pub fn new(notes: &[u8]) -> Self {
         assert!(!notes.is_empty());
         Sequencer {
             trigger: SchmittTrigger::default(),
-            notes: notes.iter().cloned().map(midi_to_cv).collect(),
+            notes: notes.iter().copied().map(midi_to_cv).collect(),
             position: notes.len() - 1,
         }
     }
@@ -37,6 +37,6 @@ impl Module for Sequencer {
     }
 }
 
-fn midi_to_cv(midi_note: u32) -> f32 {
+fn midi_to_cv(midi_note: u8) -> f32 {
     (midi_note as f32 - 60.0) / 12.0
 }
