@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "filters",
+    "gui",
     "oscillators",
     "rack",
     "sequencer",
