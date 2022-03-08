@@ -1,5 +1,7 @@
 use eframe::{egui, epi};
 
+pub mod knob;
+
 const HP_PIXELS: usize = 20;
 const PANEL_HEIGHT: usize = 25 * HP_PIXELS;
 
