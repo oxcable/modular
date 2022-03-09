@@ -1,0 +1,10 @@
+[package]
+name = "audio_host"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cpal = "0.13.4"
+ctrlc = "3.2.1"
+rack = { path = "../rack/" }
+thiserror = "1.0.30"

@@ -1,14 +1,8 @@
-use std::io::{stdin, Read};
-
-use anyhow::anyhow;
+use audio_host::AudioHost;
 use clap::Parser;
-use cpal::{
-    traits::{DeviceTrait, HostTrait, StreamTrait},
-    BufferSize,
-};
 use filters::VCF;
 use oscillators::{LFO, VCO};
-use rack::{voltage::AUDIO_VOLTS, Rack};
+use rack::Rack;
 use sequencer::Sequencer;
 use utility_modules::{amplifier::VCA, clock::Clock, envelope::ADSR, midi::MidiIn};
 
@@ -58,27 +52,6 @@ fn main() -> anyhow::Result<()> {
     rack.connect(lfo.output(LFO::TRI_OUT), filter.input(VCF::CUTOFF_IN))?;
     rack.connect(filter.output(VCF::LOWPASS_OUT), Rack::audio_output())?;
 
-    let host = cpal::default_host();
-    let device = host
-        .default_output_device()
-        .ok_or(anyhow!("no output device"))?;
-    let mut config = device.default_output_config()?.config();
-    config.channels = 1;
-    config.buffer_size = BufferSize::Fixed(64);
-
-    rack.reset(config.sample_rate.0 as usize);
-    let stream = device.build_output_stream(
-        &config,
-        move |samples: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            for s in samples.iter_mut() {
-                *s = rack.tick() / AUDIO_VOLTS;
-            }
-        },
-        move |err| println!("cpal error: {:?}", err),
-    )?;
-    stream.play()?;
-
-    let mut buf = [0];
-    stdin().read_exact(&mut buf)?;
+    AudioHost::default().run_forever(rack)?;
     Ok(())
 }

@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "audio_host",
     "filters",
     "gui",
     "oscillators",
