@@ -1,23 +1,35 @@
 use eframe::{egui, epi};
+use rack::ModuleHandle;
 
+mod connections;
 pub mod jack;
 pub mod knob;
+
+use connections::Connections;
 
 const HP_PIXELS: usize = 20;
 const PANEL_HEIGHT: usize = 25 * HP_PIXELS;
 
 pub trait Panel {
     fn width(&self) -> usize;
-    fn update(&mut self, ui: &mut egui::Ui);
+    fn update(&mut self, handle: &ModuleHandle, ui: &mut egui::Ui);
 }
 
 pub struct ModularSynth {
-    panels: Vec<Box<dyn Panel>>,
+    panels: Vec<(ModuleHandle, Box<dyn Panel>)>,
+    connections: connections::Connections,
 }
 
 impl ModularSynth {
     pub fn new(panels: Vec<Box<dyn Panel>>) -> Self {
-        ModularSynth { panels }
+        ModularSynth {
+            panels: panels
+                .into_iter()
+                .enumerate()
+                .map(|(i, p)| (ModuleHandle(i), p))
+                .collect(),
+            connections: Connections::new(),
+        }
     }
 }
 
@@ -73,7 +85,7 @@ impl epi::App for ModularSynth {
     fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
-                for panel in &mut self.panels {
+                for (handle, panel) in &mut self.panels {
                     let width = HP_PIXELS * panel.width();
                     let desired_size = egui::vec2(width as f32, PANEL_HEIGHT as f32);
                     let (rect, _response) =
@@ -90,10 +102,11 @@ impl epi::App for ModularSynth {
                             rect.shrink(10.0),
                             egui::Layout::top_down(egui::Align::Center),
                         );
-                        panel.update(&mut panel_ui);
+                        panel.update(handle, &mut panel_ui);
                     }
                 }
             });
+            self.connections.update(ui);
         });
     }
 }

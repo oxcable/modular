@@ -1,19 +1,20 @@
 use eframe::egui::*;
+use rack::{ModuleInput, ModuleOutput};
 
 pub struct Jack {
     type_: JackType,
 }
 
 impl Jack {
-    pub fn input() -> Self {
+    pub fn input(input: ModuleInput) -> Self {
         Jack {
-            type_: JackType::Input,
+            type_: JackType::Input(input),
         }
     }
 
-    pub fn output() -> Self {
+    pub fn output(output: ModuleOutput) -> Self {
         Jack {
-            type_: JackType::Output,
+            type_: JackType::Output(output),
         }
     }
 }
@@ -24,9 +25,30 @@ impl Widget for Jack {
         let desired_size = radius * vec2(3.5, 2.0);
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::click());
 
+        // Interact:
+        let origin = rect.center();
+        if response.clicked() {
+            use JackInteraction::*;
+            use JackType::*;
+            match (self.type_, JackInteraction::get(ui)) {
+                (Output(output), Some(PendingInput(input, input_pos))) => {
+                    CreateConnection(output, origin, input, input_pos).update(ui);
+                }
+                (Input(input), Some(PendingOutput(output, output_pos))) => {
+                    CreateConnection(output, output_pos, input, origin).update(ui);
+                }
+                (Output(output), None) => {
+                    PendingOutput(output, origin).update(ui);
+                }
+                (Input(input), None) => {
+                    PendingInput(input, origin).update(ui);
+                }
+                _ => (),
+            }
+        }
+
         // Draw:
         if ui.is_rect_visible(rect) {
-            let origin = rect.center();
             let widget = ui.style().interact(&response);
 
             // Hexagon container:
@@ -51,8 +73,8 @@ impl Widget for Jack {
             // Arrow:
             let arrow_dir = vec2(0.75 * radius, 0.0);
             let arrow_origin = match self.type_ {
-                JackType::Input => rect.left_center(),
-                JackType::Output => rect.right_center() - arrow_dir,
+                JackType::Input(_) => rect.left_center(),
+                JackType::Output(_) => rect.right_center() - arrow_dir,
             };
             ui.painter()
                 .arrow(arrow_origin, arrow_dir, widget.fg_stroke);
@@ -62,7 +84,29 @@ impl Widget for Jack {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 enum JackType {
-    Input,
-    Output,
+    Input(ModuleInput),
+    Output(ModuleOutput),
+}
+
+#[derive(Copy, Clone, Debug)]
+pub(crate) enum JackInteraction {
+    PendingInput(ModuleInput, Pos2),
+    PendingOutput(ModuleOutput, Pos2),
+    CreateConnection(ModuleOutput, Pos2, ModuleInput, Pos2),
+}
+
+impl JackInteraction {
+    pub(crate) fn get(ui: &Ui) -> Option<Self> {
+        ui.memory().data.get_temp::<Self>(Id::null())
+    }
+
+    pub(crate) fn update(self, ui: &Ui) {
+        ui.memory().data.insert_temp::<Self>(Id::null(), self);
+    }
+
+    pub(crate) fn clear(ui: &Ui) {
+        ui.memory().data.remove::<Self>(Id::null());
+    }
 }

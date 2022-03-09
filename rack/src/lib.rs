@@ -14,7 +14,7 @@ pub trait Module {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct ModuleHandle(usize);
+pub struct ModuleHandle(pub usize);
 
 #[derive(Copy, Clone, Debug)]
 pub struct ModuleInput {

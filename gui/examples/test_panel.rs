@@ -1,6 +1,7 @@
 use eframe::egui;
 
 use gui::{jack::Jack, knob::Knob, ModularSynth, Panel};
+use rack::ModuleHandle;
 
 struct TestPanel {
     knob1: f32,
@@ -21,7 +22,7 @@ impl Panel for TestPanel {
         12
     }
 
-    fn update(&mut self, ui: &mut egui::Ui) {
+    fn update(&mut self, handle: &ModuleHandle, ui: &mut egui::Ui) {
         ui.heading("Test Panel");
         ui.add_space(20.0);
         ui.columns(2, |columns| {
@@ -39,12 +40,16 @@ impl Panel for TestPanel {
         ui.add_space(20.0);
         ui.columns(2, |columns| {
             columns[0].vertical_centered(|ui| {
-                ui.add(Jack::input());
-                ui.label("Input");
+                ui.add(Jack::input(handle.input(0)));
+                ui.add_space(5.0);
+                ui.add(Jack::input(handle.input(1)));
+                ui.label("Inputs");
             });
             columns[1].vertical_centered(|ui| {
-                ui.add(Jack::output());
-                ui.label("Output");
+                ui.add(Jack::output(handle.output(0)));
+                ui.add_space(5.0);
+                ui.add(Jack::output(handle.output(1)));
+                ui.label("Outputs");
             });
         });
     }
