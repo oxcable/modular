@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 audio_host = { path = "../audio_host/" }
 anyhow = "1.0"
-clap = { version = "3.1.5", features = ["derive"] }
 filters = { path = "../filters/" }
 oscillators = { path = "../oscillators/" }
 rack = { path = "../rack/" }

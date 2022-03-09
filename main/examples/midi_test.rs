@@ -1,0 +1,22 @@
+use audio_host::AudioHost;
+use oscillators::VCO;
+use rack::Rack;
+use utility_modules::{amplifier::VCA, envelope::ADSR, midi::MidiIn};
+
+fn main() -> anyhow::Result<()> {
+    let mut rack = Rack::new();
+
+    let midi = rack.add_module(MidiIn::new()?);
+    let osc = rack.add_module(VCO::new());
+    let adsr = rack.add_module(ADSR::default());
+    let amp = rack.add_module(VCA::default());
+
+    rack.connect(midi.output(MidiIn::V_OCT_OUT), osc.input(VCO::V_OCT_IN))?;
+    rack.connect(midi.output(MidiIn::GATE_OUT), adsr.input(ADSR::GATE_IN))?;
+    rack.connect(adsr.output(ADSR::CV_OUT), amp.input(VCA::CV_IN))?;
+    rack.connect(osc.output(VCO::SAW_OUT), amp.input(VCA::AUDIO_IN))?;
+    rack.connect(amp.output(VCA::AUDIO_OUT), Rack::audio_output())?;
+
+    AudioHost::default().run_forever(rack)?;
+    Ok(())
+}
