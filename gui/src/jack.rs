@@ -49,7 +49,7 @@ impl Widget for Jack {
                 .circle_filled(origin, 0.45 * radius, widget.fg_stroke.color);
 
             // Arrow:
-            let arrow_dir = vec2(0.75*radius, 0.0);
+            let arrow_dir = vec2(0.75 * radius, 0.0);
             let arrow_origin = match self.type_ {
                 JackType::Input => rect.left_center(),
                 JackType::Output => rect.right_center() - arrow_dir,
