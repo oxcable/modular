@@ -52,12 +52,22 @@ impl Panel for TestPanel {
                 ui.label("Outputs");
             });
         });
+        egui::TopBottomPanel::bottom("dark_mode").show(ui.ctx(), |ui| {
+            ui.horizontal(|ui| {
+                egui::global_dark_light_mode_switch(ui);
+                ui.small(if ui.visuals().dark_mode {
+                    "Dark mode"
+                } else {
+                    "Light mode"
+                });
+            });
+        });
     }
 }
 
 fn main() {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::Vec2::new(255.0, 515.0)),
+        initial_window_size: Some(egui::Vec2::new(255.0, 540.0)),
         ..Default::default()
     };
     let app = ModularSynth::new(vec![Box::new(TestPanel::default())]);
