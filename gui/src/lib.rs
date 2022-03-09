@@ -1,5 +1,6 @@
 use eframe::{egui, epi};
 
+pub mod jack;
 pub mod knob;
 
 const HP_PIXELS: usize = 20;
