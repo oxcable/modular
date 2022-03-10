@@ -63,13 +63,13 @@ impl epi::App for ModularSynth {
         let mut style: Style = (*ctx.style()).clone();
         style
             .text_styles
-            .insert(TextStyle::Heading, FontId::new(30.0, title.clone()));
+            .insert(TextStyle::Heading, FontId::new(30.0, title));
         style
             .text_styles
             .insert(TextStyle::Body, FontId::new(18.0, regular.clone()));
         style
             .text_styles
-            .insert(TextStyle::Small, FontId::new(12.0, regular.clone()));
+            .insert(TextStyle::Small, FontId::new(12.0, regular));
         ctx.set_style(style);
     }
 
