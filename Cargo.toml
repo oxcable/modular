@@ -1,8 +1,10 @@
 [workspace]
 members = [
     "audio_host",
+    "eurorack",
     "filters",
     "gui",
+    "module",
     "oscillators",
     "rack",
     "sequencer",

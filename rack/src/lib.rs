@@ -1,47 +1,16 @@
-pub mod utils;
-pub mod voltage;
-
-use voltage::Voltage;
+// Temporarily re-export refactored interfaces:
+pub use eurorack as voltage;
+pub use eurorack::Voltage;
+pub mod utils {
+    pub use eurorack::midi_to_voltage;
+    pub use eurorack::utils::*;
+}
+pub use module::AudioUnit as Module;
+pub use module::{ModuleHandle, ModuleInput, ModuleOutput};
 
 pub trait ModuleIO {
     const INPUTS: usize;
     const OUTPUTS: usize;
-}
-
-pub trait Module {
-    fn reset(&mut self, sample_rate: usize);
-    fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]);
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct ModuleHandle(pub usize);
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub struct ModuleInput {
-    module: usize,
-    channel: usize,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub struct ModuleOutput {
-    module: usize,
-    channel: usize,
-}
-
-impl ModuleHandle {
-    pub fn input(&self, channel: usize) -> ModuleInput {
-        ModuleInput {
-            module: self.0,
-            channel,
-        }
-    }
-
-    pub fn output(&self, channel: usize) -> ModuleOutput {
-        ModuleOutput {
-            module: self.0,
-            channel,
-        }
-    }
 }
 
 pub struct Rack {
@@ -74,13 +43,13 @@ impl Rack {
     }
 
     pub fn connect(&mut self, src: ModuleOutput, dst: ModuleInput) -> Result<(), RackError> {
-        if dst.module == AUDIO_OUTPUT_HANDLE.0 {
+        if dst.module == AUDIO_OUTPUT_HANDLE {
             self.output_channel = Some(src);
             Ok(())
-        } else if src.module >= self.modules.len() || dst.module >= self.modules.len() {
+        } else if src.module.0 >= self.modules.len() || dst.module.0 >= self.modules.len() {
             Err(RackError::InvalidModule)
-        } else if src.channel >= self.modules[src.module].outputs.len()
-            || dst.channel >= self.modules[dst.module].inputs.len()
+        } else if src.channel >= self.modules[src.module.0].outputs.len()
+            || dst.channel >= self.modules[dst.module.0].inputs.len()
         {
             Err(RackError::InvalidChannel)
         } else {
@@ -99,8 +68,8 @@ impl Rack {
         // First propogate voltages through all patch cables. All signals take 1 sample to
         // propogate. This simplifies routing and enables feedback and circular patches.
         for (src, dst) in &self.patch_cables {
-            let v = self.modules[src.module].outputs[src.channel];
-            self.modules[dst.module].inputs[dst.channel] = Some(v);
+            let v = self.modules[src.module.0].outputs[src.channel];
+            self.modules[dst.module.0].inputs[dst.channel] = Some(v);
         }
 
         for module in &mut self.modules {
@@ -108,7 +77,7 @@ impl Rack {
         }
 
         self.output_channel
-            .map_or(0.0, |src| self.modules[src.module].outputs[src.channel])
+            .map_or(0.0, |src| self.modules[src.module.0].outputs[src.channel])
     }
 }
 

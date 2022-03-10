@@ -1,7 +1,7 @@
 use eframe::egui;
 
-use gui::{jack::Jack, knob::Knob, ModularSynth, Panel};
-use rack::ModuleHandle;
+use gui::{jack::Jack, knob::Knob, ModularSynth};
+use module::{ModuleHandle, Panel};
 
 struct TestPanel {
     knob1: f32,

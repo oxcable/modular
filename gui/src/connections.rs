@@ -1,6 +1,6 @@
 use eframe::egui::*;
 use eframe::epaint::QuadraticBezierShape;
-use rack::{ModuleInput, ModuleOutput};
+use module::{ModuleInput, ModuleOutput};
 
 use crate::jack::JackInteraction;
 

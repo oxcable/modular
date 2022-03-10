@@ -1,5 +1,5 @@
 use eframe::{egui, epi};
-use rack::ModuleHandle;
+use module::{ModuleHandle, Panel};
 
 mod connections;
 pub mod jack;
@@ -9,11 +9,6 @@ use connections::Connections;
 
 const HP_PIXELS: usize = 20;
 const PANEL_HEIGHT: usize = 25 * HP_PIXELS;
-
-pub trait Panel {
-    fn width(&self) -> usize;
-    fn update(&mut self, handle: &ModuleHandle, ui: &mut egui::Ui);
-}
 
 pub struct ModularSynth {
     panels: Vec<(ModuleHandle, Box<dyn Panel>)>,

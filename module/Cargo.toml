@@ -1,9 +1,8 @@
 [package]
-name = "rack"
+name = "module"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+egui = "0.17.0"
 eurorack = { path = "../eurorack/" }
-module = { path = "../module/" }
-thiserror = "1.0.30"

@@ -1,5 +1,5 @@
 use eframe::egui::*;
-use rack::{ModuleInput, ModuleOutput};
+use module::{ModuleInput, ModuleOutput};
 
 pub struct Jack {
     type_: JackType,
