@@ -18,6 +18,10 @@ impl<'a> Knob<'a> {
         }
     }
 
+    pub fn attenuverter(param: &'a dyn Parameter<Value = f32>) -> Self {
+        Knob::new(param).range(-1.0..=1.0)
+    }
+
     pub fn range(mut self, range: RangeInclusive<f32>) -> Self {
         self.range = range;
         self

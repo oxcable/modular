@@ -1,41 +1,104 @@
-use rack::{
-    voltage::{Voltage, CV_VOLTS},
-    Module, ModuleIO,
-};
+use std::sync::Arc;
 
-pub struct VCA {
-    gain: f32,
+use atomic_float::AtomicF32;
+use eurorack::{Voltage, CV_VOLTS};
+use gui::{jack::Jack, knob::Knob};
+use module::{AudioUnit, Module, Panel, Parameter};
+use rack::ModuleIO;
+
+#[derive(Default)]
+pub struct Vca {
+    params: Arc<VcaParams>,
 }
 
-impl ModuleIO for VCA {
+impl Module for Vca {
+    fn inputs(&self) -> usize {
+        VcaUnit::INPUTS
+    }
+
+    fn outputs(&self) -> usize {
+        VcaUnit::OUTPUTS
+    }
+
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+        Box::new(VcaUnit(self.params.clone()))
+    }
+
+    fn create_panel(&self) -> Box<dyn Panel> {
+        Box::new(VcaPanel(self.params.clone()))
+    }
+}
+
+struct VcaParams {
+    gain: AtomicF32,
+    gain_atten: AtomicF32,
+}
+
+impl Default for VcaParams {
+    fn default() -> Self {
+        VcaParams {
+            gain: AtomicF32::new(1.0),
+            gain_atten: AtomicF32::new(0.0),
+        }
+    }
+}
+
+pub struct VcaUnit(Arc<VcaParams>);
+
+impl ModuleIO for VcaUnit {
     const INPUTS: usize = 2;
     const OUTPUTS: usize = 1;
 }
 
-impl VCA {
+impl VcaUnit {
     pub const AUDIO_IN: usize = 0;
     pub const CV_IN: usize = 1;
 
     pub const AUDIO_OUT: usize = 0;
 
     fn new(gain_db: f32) -> Self {
-        VCA {
-            gain: 10f32.powf(gain_db / 20.0),
-        }
+        VcaUnit(Arc::new(VcaParams {
+            gain: AtomicF32::new(10f32.powf(gain_db / 20.0)),
+            gain_atten: AtomicF32::new(0.0),
+        }))
     }
 }
 
-impl Default for VCA {
+impl Default for VcaUnit {
     fn default() -> Self {
         Self::new(0.0)
     }
 }
 
-impl Module for VCA {
+impl AudioUnit for VcaUnit {
     fn reset(&mut self, _sample_rate: usize) {}
 
     fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]) {
-        let gain = self.gain * inputs[Self::CV_IN].unwrap_or(0.0) / CV_VOLTS;
+        let mut gain = self.0.gain.read();
+        if let Some(cv_in) = inputs[Self::CV_IN] {
+            gain *= self.0.gain_atten.read() * cv_in / CV_VOLTS;
+        }
         outputs[Self::AUDIO_OUT] = gain * inputs[Self::AUDIO_IN].unwrap_or(0.0);
+    }
+}
+
+pub struct VcaPanel(Arc<VcaParams>);
+
+impl Panel for VcaPanel {
+    fn width(&self) -> usize {
+        5
+    }
+
+    fn update(&mut self, handle: &module::ModuleHandle, ui: &mut egui::Ui) {
+        ui.heading("VCA");
+        ui.add_space(20.0);
+        ui.add(Knob::new(&self.0.gain).range(0.0..=1.0).scale(1.8));
+        ui.label("Gain");
+        ui.add(Knob::attenuverter(&self.0.gain_atten));
+        ui.add(Jack::input(handle.input(VcaUnit::CV_IN)));
+        ui.add_space(150.0);
+        ui.add(Jack::input(handle.input(VcaUnit::AUDIO_IN)));
+        ui.label("Audio");
+        ui.add(Jack::output(handle.output(VcaUnit::AUDIO_OUT)));
     }
 }

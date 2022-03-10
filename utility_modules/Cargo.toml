@@ -4,7 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+atomic_float = "0.1.0"
+egui = "0.17.0"
+eurorack = { path = "../eurorack/" }
+gui = { path = "../gui/" }
 midir = "0.7.0"
 midly = "0.5.2"
+module = { path = "../module/" }
 rack = { path = "../rack/" }
 thiserror = "1.0"

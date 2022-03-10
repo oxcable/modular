@@ -3,7 +3,7 @@ use filters::VCF;
 use oscillators::{LFO, VCO};
 use rack::Rack;
 use sequencer::Sequencer;
-use utility_modules::{amplifier::VCA, clock::Clock, envelope::ADSR};
+use utility_modules::{amplifier::VcaUnit as VCA, clock::Clock, envelope::ADSR};
 
 fn main() -> anyhow::Result<()> {
     let mut rack = Rack::new();
