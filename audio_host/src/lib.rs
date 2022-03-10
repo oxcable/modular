@@ -48,6 +48,9 @@ impl AudioHost {
                         AudioMessage::ConnectModules(output, input) => {
                             rack.connect(output, input).unwrap();
                         }
+                        AudioMessage::DisconnectModules(output, input) => {
+                            rack.disconnect(output, input).unwrap();
+                        }
                     }
                 }
                 for s in samples.iter_mut() {
@@ -86,6 +89,7 @@ impl Default for AudioHost {
 #[derive(Debug)]
 pub enum AudioMessage {
     ConnectModules(ModuleOutput, ModuleInput),
+    DisconnectModules(ModuleOutput, ModuleInput),
 }
 
 #[derive(thiserror::Error, Debug)]

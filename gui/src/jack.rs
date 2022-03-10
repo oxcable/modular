@@ -27,7 +27,7 @@ impl Widget for Jack {
 
         // Interact:
         let origin = rect.center();
-        if response.clicked() {
+        if response.clicked_by(PointerButton::Primary) {
             use JackInteraction::*;
             use JackType::*;
             match (self.type_, JackInteraction::get(ui)) {
@@ -44,6 +44,12 @@ impl Widget for Jack {
                     PendingInput(input, origin).update(ui);
                 }
                 _ => (),
+            }
+        } else if response.clicked_by(PointerButton::Secondary) {
+            use JackInteraction::*;
+            match self.type_ {
+                JackType::Output(output) => ClearOutput(output).update(ui),
+                JackType::Input(input) => ClearInput(input).update(ui),
             }
         }
 
@@ -95,6 +101,8 @@ pub(crate) enum JackInteraction {
     PendingInput(ModuleInput, Pos2),
     PendingOutput(ModuleOutput, Pos2),
     CreateConnection(ModuleOutput, Pos2, ModuleInput, Pos2),
+    ClearInput(ModuleInput),
+    ClearOutput(ModuleOutput),
 }
 
 impl JackInteraction {

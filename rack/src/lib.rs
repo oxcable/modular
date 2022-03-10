@@ -72,6 +72,21 @@ impl Rack {
         }
     }
 
+    pub fn disconnect(&mut self, src: ModuleOutput, dst: ModuleInput) -> Result<(), RackError> {
+        if dst.module == AUDIO_OUTPUT_HANDLE {
+            self.output_channel = None;
+            Ok(())
+        } else {
+            let i = self
+                .patch_cables
+                .iter()
+                .position(|c| c.0 == src && c.1 == dst)
+                .ok_or(RackError::NotConnected)?;
+            self.patch_cables.swap_remove(i);
+            Ok(())
+        }
+    }
+
     pub fn reset(&mut self, sample_rate: usize) {
         for module in &mut self.modules {
             module.module.reset(sample_rate);
@@ -109,4 +124,6 @@ pub enum RackError {
     InvalidModule,
     #[error("the referenced module channel does not exist")]
     InvalidChannel,
+    #[error("the referenced modules are not connected")]
+    NotConnected,
 }

@@ -33,11 +33,31 @@ impl Connections {
                     if self.input_is_empty(input) {
                         host.send_message(AudioMessage::ConnectModules(output, input));
                         self.connections.push(Connection {
-                            _output: output,
+                            output,
                             input,
                             output_pos,
                             input_pos,
                         });
+                    }
+                    JackInteraction::clear(ui);
+                }
+                JackInteraction::ClearInput(input) => {
+                    if let Some(i) = self.connections.iter().position(|c| c.input == input) {
+                        host.send_message(AudioMessage::DisconnectModules(
+                            self.connections[i].output,
+                            input,
+                        ));
+                        self.connections.swap_remove(i);
+                    }
+                    JackInteraction::clear(ui);
+                }
+                JackInteraction::ClearOutput(output) => {
+                    while let Some(i) = self.connections.iter().position(|c| c.output == output) {
+                        host.send_message(AudioMessage::DisconnectModules(
+                            output,
+                            self.connections[i].input,
+                        ));
+                        self.connections.swap_remove(i);
                     }
                     JackInteraction::clear(ui);
                 }
@@ -100,7 +120,7 @@ impl Cable {
 
 #[derive(Copy, Clone, Debug)]
 struct Connection {
-    _output: ModuleOutput,
+    output: ModuleOutput,
     input: ModuleInput,
     output_pos: Pos2,
     input_pos: Pos2,
