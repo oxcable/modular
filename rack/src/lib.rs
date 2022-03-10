@@ -95,7 +95,7 @@ impl Rack {
     }
 }
 
-const AUDIO_OUTPUT_HANDLE: ModuleHandle = ModuleHandle(usize::MAX);
+pub const AUDIO_OUTPUT_HANDLE: ModuleHandle = ModuleHandle(usize::MAX);
 
 struct ModuleFacade {
     module: Box<dyn Module + Send>,

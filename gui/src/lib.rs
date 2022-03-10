@@ -1,9 +1,11 @@
 use eframe::{egui, epi};
 use module::{ModuleHandle, Panel};
 
-mod connections;
 pub mod jack;
 pub mod knob;
+
+mod connections;
+mod panels;
 
 use connections::Connections;
 
@@ -16,7 +18,11 @@ pub struct ModularSynth {
 }
 
 impl ModularSynth {
-    pub fn new(panels: Vec<(ModuleHandle, Box<dyn Panel>)>) -> Self {
+    pub fn new(mut panels: Vec<(ModuleHandle, Box<dyn Panel>)>) -> Self {
+        panels.push((
+            rack::AUDIO_OUTPUT_HANDLE,
+            Box::new(panels::AudioOutputPanel),
+        ));
         ModularSynth {
             panels,
             connections: Connections::new(),
