@@ -1,3 +1,4 @@
+use audio_host::{AudioHost, AudioMessage};
 use eframe::egui::*;
 use eframe::epaint::QuadraticBezierShape;
 use module::{ModuleInput, ModuleOutput};
@@ -15,7 +16,7 @@ impl Connections {
         }
     }
 
-    pub(crate) fn update(&mut self, ui: &mut Ui) {
+    pub(crate) fn update(&mut self, host: &AudioHost, ui: &mut Ui) {
         // Handle any interactions from Jack widgets:
         let mut pending_source = None;
         if let Some(interaction) = JackInteraction::get(ui) {
@@ -30,6 +31,7 @@ impl Connections {
                 JackInteraction::PendingOutput(_, pos) => pending_source = Some(pos),
                 JackInteraction::CreateConnection(output, output_pos, input, input_pos) => {
                     if self.input_is_empty(input) {
+                        host.send_message(AudioMessage::ConnectModules(output, input));
                         self.connections.push(Connection {
                             _output: output,
                             input,

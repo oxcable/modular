@@ -4,11 +4,13 @@ use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     BufferSize, Stream,
 };
+use module::{ModuleInput, ModuleOutput};
 use rack::{voltage::AUDIO_VOLTS, Rack};
 
 pub struct AudioHost {
     buffer_size: u32,
     stream: Option<Stream>,
+    tx: Option<mpsc::Sender<AudioMessage>>,
 }
 
 impl AudioHost {
@@ -16,6 +18,13 @@ impl AudioHost {
         AudioHost {
             buffer_size,
             stream: None,
+            tx: None,
+        }
+    }
+
+    pub fn send_message(&self, msg: AudioMessage) {
+        if let Some(tx) = &self.tx {
+            tx.send(msg).unwrap();
         }
     }
 
@@ -30,9 +39,17 @@ impl AudioHost {
 
         rack.reset(config.sample_rate.0 as usize);
 
+        let (tx, rx) = mpsc::channel();
         let stream = device.build_output_stream(
             &config,
             move |samples: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                while let Ok(msg) = rx.try_recv() {
+                    match msg {
+                        AudioMessage::ConnectModules(output, input) => {
+                            rack.connect(output, input).unwrap();
+                        }
+                    }
+                }
                 for s in samples.iter_mut() {
                     *s = rack.tick() / AUDIO_VOLTS;
                 }
@@ -41,6 +58,7 @@ impl AudioHost {
         )?;
         stream.play()?;
         self.stream = Some(stream);
+        self.tx = Some(tx);
 
         Ok(())
     }
@@ -63,6 +81,11 @@ impl Default for AudioHost {
     fn default() -> Self {
         AudioHost::new(64)
     }
+}
+
+#[derive(Debug)]
+pub enum AudioMessage {
+    ConnectModules(ModuleOutput, ModuleInput),
 }
 
 #[derive(thiserror::Error, Debug)]

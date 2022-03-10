@@ -1,3 +1,4 @@
+use audio_host::AudioHost;
 use eframe::{egui, epi};
 use module::{ModuleHandle, Panel};
 
@@ -14,16 +15,18 @@ const PANEL_HEIGHT: usize = 25 * HP_PIXELS;
 
 pub struct ModularSynth {
     panels: Vec<(ModuleHandle, Box<dyn Panel>)>,
-    connections: connections::Connections,
+    audio_host: AudioHost,
+    connections: Connections,
 }
 
 impl ModularSynth {
-    pub fn new(mut panels: Vec<(ModuleHandle, Box<dyn Panel>)>) -> Self {
+    pub fn new(audio_host: AudioHost, mut panels: Vec<(ModuleHandle, Box<dyn Panel>)>) -> Self {
         panels.push((
             rack::AUDIO_OUTPUT_HANDLE,
             Box::new(panels::AudioOutputPanel),
         ));
         ModularSynth {
+            audio_host,
             panels,
             connections: Connections::new(),
         }
@@ -103,7 +106,7 @@ impl epi::App for ModularSynth {
                     }
                 }
             });
-            self.connections.update(ui);
+            self.connections.update(&self.audio_host, ui);
         });
     }
 }

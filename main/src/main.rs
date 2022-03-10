@@ -2,12 +2,9 @@ use audio_host::AudioHost;
 use eframe::egui::vec2;
 use gui::ModularSynth;
 use module::Module;
-use oscillators::{
-    lfo::{Lfo, LfoUnit},
-    vco::{Vco, VcoUnit},
-};
+use oscillators::{lfo::Lfo, vco::Vco};
 use rack::Rack;
-use utility_modules::amplifier::{Vca, VcaUnit};
+use utility_modules::amplifier::Vca;
 
 fn main() -> anyhow::Result<()> {
     let window_options = eframe::NativeOptions {
@@ -23,24 +20,15 @@ fn main() -> anyhow::Result<()> {
     let lfo_handle = rack.add_module(&lfo);
     let vco_handle = rack.add_module(&vco);
     let vca_handle = rack.add_module(&vca);
-    rack.connect(
-        lfo_handle.output(LfoUnit::TRI_OUT),
-        vca_handle.input(VcaUnit::CV_IN),
-    )?;
-    rack.connect(
-        vco_handle.output(VcoUnit::TRI_OUT),
-        vca_handle.input(VcaUnit::AUDIO_IN),
-    )?;
-    rack.connect(vca_handle.output(VcaUnit::AUDIO_OUT), Rack::audio_output())?;
-    let mut audio_host = AudioHost::default();
 
     let panels = vec![
         (lfo_handle, lfo.create_panel()),
         (vco_handle, vco.create_panel()),
         (vca_handle, vca.create_panel()),
     ];
-    let app = ModularSynth::new(panels);
 
+    let mut audio_host = AudioHost::default();
     audio_host.start(rack)?;
+    let app = ModularSynth::new(audio_host, panels);
     eframe::run_native(Box::new(app), window_options);
 }

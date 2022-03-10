@@ -1,6 +1,7 @@
 use eframe::egui;
 
 use atomic_float::AtomicF32;
+use audio_host::AudioHost;
 use gui::{jack::Jack, knob::Knob, ModularSynth};
 use module::{ModuleHandle, Panel, Parameter};
 
@@ -71,6 +72,9 @@ fn main() {
         initial_window_size: Some(egui::Vec2::new(255.0, 540.0)),
         ..Default::default()
     };
-    let app = ModularSynth::new(vec![(ModuleHandle(0), Box::new(TestPanel::default()))]);
+    let app = ModularSynth::new(
+        AudioHost::default(),
+        vec![(ModuleHandle(0), Box::new(TestPanel::default()))],
+    );
     eframe::run_native(Box::new(app), options);
 }
