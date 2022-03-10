@@ -2,7 +2,10 @@ use audio_host::AudioHost;
 use eframe::egui::vec2;
 use gui::ModularSynth;
 use module::Module;
-use oscillators::vco::{Vco, VcoUnit};
+use oscillators::{
+    lfo::Lfo,
+    vco::{Vco, VcoUnit},
+};
 use rack::Rack;
 
 fn main() -> anyhow::Result<()> {
@@ -11,14 +14,19 @@ fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
 
+    let lfo = Lfo::default();
     let vco = Vco::default();
 
     let mut rack = Rack::new();
+    let lfo_handle = rack.add_module(&lfo);
     let vco_handle = rack.add_module(&vco);
     rack.connect(vco_handle.output(VcoUnit::TRI_OUT), Rack::audio_output())?;
     let mut audio_host = AudioHost::default();
 
-    let panels = vec![(vco_handle, vco.create_panel())];
+    let panels = vec![
+        (lfo_handle, lfo.create_panel()),
+        (vco_handle, vco.create_panel()),
+    ];
     let app = ModularSynth::new(panels);
 
     audio_host.start(rack)?;

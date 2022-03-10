@@ -1,3 +1,5 @@
+use std::sync::atomic::Ordering;
+
 use eurorack::Voltage;
 
 pub trait AudioUnit {
@@ -46,5 +48,21 @@ impl ModuleHandle {
             module: *self,
             channel,
         }
+    }
+}
+
+pub trait Parameter {
+    type Value;
+    fn read(&self) -> Self::Value;
+    fn write(&self, value: Self::Value);
+}
+
+impl Parameter for atomic_float::AtomicF32 {
+    type Value = f32;
+    fn read(&self) -> Self::Value {
+        self.load(Ordering::Relaxed)
+    }
+    fn write(&self, value: Self::Value) {
+        self.store(value, Ordering::Relaxed)
     }
 }

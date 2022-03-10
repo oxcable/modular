@@ -1,17 +1,18 @@
 use std::{f32::consts::PI, ops::RangeInclusive};
 
 use eframe::egui::*;
+use module::Parameter;
 
 pub struct Knob<'a> {
-    value: &'a mut f32,
+    param: &'a dyn Parameter<Value = f32>,
     scale: f32,
     range: RangeInclusive<f32>,
 }
 
 impl<'a> Knob<'a> {
-    pub fn new(value: &'a mut f32) -> Self {
+    pub fn new(param: &'a dyn Parameter<Value = f32>) -> Self {
         Knob {
-            value,
+            param,
             scale: 1.0,
             range: 0.0..=1.0,
         }
@@ -38,13 +39,14 @@ impl<'a> Widget for Knob<'a> {
         let mut response = response.on_hover_cursor(CursorIcon::Grab);
 
         // Interact:
-        let mut relative_value = remap_clamp(*self.value, self.range.clone(), 0.0..=1.0);
+        let mut relative_value = remap_clamp(self.param.read(), self.range.clone(), 0.0..=1.0);
         if response.dragged() {
             ui.output().cursor_icon = CursorIcon::Grabbing;
             let delta = -response.drag_delta().y / drag_height;
             if delta != 0.0 {
                 relative_value = (relative_value + delta).clamp(0.0, 1.0);
-                *self.value = remap(relative_value, 0.0..=1.0, self.range.clone());
+                self.param
+                    .write(remap(relative_value, 0.0..=1.0, self.range.clone()));
                 response.mark_changed();
             }
         }

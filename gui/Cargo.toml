@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+atomic_float = "0.1.0"
 eframe = "0.17.0"
 module = { path = "../module/" }
