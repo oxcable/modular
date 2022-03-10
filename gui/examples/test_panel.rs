@@ -70,6 +70,6 @@ fn main() {
         initial_window_size: Some(egui::Vec2::new(255.0, 540.0)),
         ..Default::default()
     };
-    let app = ModularSynth::new(vec![Box::new(TestPanel::default())]);
+    let app = ModularSynth::new(vec![(ModuleHandle(0), Box::new(TestPanel::default()))]);
     eframe::run_native(Box::new(app), options);
 }

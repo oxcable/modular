@@ -8,6 +8,8 @@ pub mod utils {
 pub use module::AudioUnit as Module;
 pub use module::{ModuleHandle, ModuleInput, ModuleOutput};
 
+use module::Module as NewModule;
+
 pub trait ModuleIO {
     const INPUTS: usize;
     const OUTPUTS: usize;
@@ -33,11 +35,23 @@ impl Rack {
         AUDIO_OUTPUT_HANDLE.input(0)
     }
 
-    pub fn add_module<M: Module + ModuleIO + Send + 'static>(&mut self, module: M) -> ModuleHandle {
+    pub fn add_module_old<M: Module + ModuleIO + Send + 'static>(
+        &mut self,
+        module: M,
+    ) -> ModuleHandle {
         self.modules.push(ModuleFacade {
             module: Box::new(module),
             inputs: vec![None; M::INPUTS],
             outputs: vec![0.0; M::OUTPUTS],
+        });
+        ModuleHandle(self.modules.len() - 1)
+    }
+
+    pub fn add_module<M: NewModule>(&mut self, module: &M) -> ModuleHandle {
+        self.modules.push(ModuleFacade {
+            module: module.create_audio_unit(),
+            inputs: vec![None; module.inputs()],
+            outputs: vec![0.0; module.outputs()],
         });
         ModuleHandle(self.modules.len() - 1)
     }

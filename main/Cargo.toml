@@ -6,7 +6,10 @@ edition = "2021"
 [dependencies]
 audio_host = { path = "../audio_host/" }
 anyhow = "1.0"
+eframe = "0.17.0"
 filters = { path = "../filters/" }
+gui = { path = "../gui/" }
+module = { path = "../module/" }
 oscillators = { path = "../oscillators/" }
 rack = { path = "../rack/" }
 sequencer = { path = "../sequencer/" }

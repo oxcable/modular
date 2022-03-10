@@ -16,13 +16,9 @@ pub struct ModularSynth {
 }
 
 impl ModularSynth {
-    pub fn new(panels: Vec<Box<dyn Panel>>) -> Self {
+    pub fn new(panels: Vec<(ModuleHandle, Box<dyn Panel>)>) -> Self {
         ModularSynth {
-            panels: panels
-                .into_iter()
-                .enumerate()
-                .map(|(i, p)| (ModuleHandle(i), p))
-                .collect(),
+            panels,
             connections: Connections::new(),
         }
     }

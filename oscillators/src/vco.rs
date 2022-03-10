@@ -1,20 +1,40 @@
-use rack::{
-    voltage::{Voltage, AUDIO_VOLTS, V_OCT_F0},
-    Module, ModuleIO,
-};
+use eurorack::{Voltage, AUDIO_VOLTS, V_OCT_F0};
+use gui::jack::Jack;
+use module::{AudioUnit, Module, Panel};
 
-pub struct VCO {
+#[derive(Default)]
+pub struct Vco;
+
+impl Module for Vco {
+    fn inputs(&self) -> usize {
+        1
+    }
+
+    fn outputs(&self) -> usize {
+        3
+    }
+
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+        Box::new(VcoUnit::new())
+    }
+
+    fn create_panel(&self) -> Box<dyn Panel> {
+        Box::new(VcoPanel {})
+    }
+}
+
+pub struct VcoUnit {
     phase: f32,
     phase_delta: f32,
     last_tri: f32,
 }
 
-impl ModuleIO for VCO {
+impl rack::ModuleIO for VcoUnit {
     const INPUTS: usize = 1;
     const OUTPUTS: usize = 3;
 }
 
-impl VCO {
+impl VcoUnit {
     pub const V_OCT_IN: usize = 0;
 
     pub const SAW_OUT: usize = 0;
@@ -23,7 +43,7 @@ impl VCO {
 
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        VCO {
+        VcoUnit {
             phase: 0.0,
             phase_delta: 0.0,
             last_tri: 0.0,
@@ -31,7 +51,7 @@ impl VCO {
     }
 }
 
-impl Module for VCO {
+impl AudioUnit for VcoUnit {
     fn reset(&mut self, sample_rate: usize) {
         self.phase_delta = V_OCT_F0 / sample_rate as f32;
     }
@@ -53,6 +73,28 @@ impl Module for VCO {
         // Compute triangle as integration of square.
         self.last_tri = 2.0 * dt * aa_sq + (1.0 - 2.0 * dt) * self.last_tri;
         outputs[Self::TRI_OUT] = AUDIO_VOLTS * self.last_tri;
+    }
+}
+
+pub struct VcoPanel {}
+
+impl Panel for VcoPanel {
+    fn width(&self) -> usize {
+        5
+    }
+
+    fn update(&mut self, handle: &module::ModuleHandle, ui: &mut egui::Ui) {
+        ui.heading("VCO");
+        ui.add_space(100.0);
+        ui.add(Jack::input(handle.input(VcoUnit::V_OCT_IN)));
+        ui.label("V/Oct");
+        ui.add_space(100.0);
+        ui.add(Jack::output(handle.output(VcoUnit::SAW_OUT)));
+        ui.label("Saw");
+        ui.add(Jack::output(handle.output(VcoUnit::SQUARE_OUT)));
+        ui.label("Square");
+        ui.add(Jack::output(handle.output(VcoUnit::TRI_OUT)));
+        ui.label("Tri");
     }
 }
 

@@ -14,7 +14,7 @@ pub trait Module {
     fn inputs(&self) -> usize;
     fn outputs(&self) -> usize;
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit>;
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send>;
     fn create_panel(&self) -> Box<dyn Panel>;
 }
 

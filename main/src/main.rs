@@ -1,38 +1,26 @@
 use audio_host::AudioHost;
-use filters::VCF;
-use oscillators::{LFO, VCO};
+use eframe::egui::vec2;
+use gui::ModularSynth;
+use module::Module;
+use oscillators::vco::{Vco, VcoUnit};
 use rack::Rack;
-use sequencer::Sequencer;
-use utility_modules::{amplifier::VCA, clock::Clock, envelope::ADSR};
 
 fn main() -> anyhow::Result<()> {
+    let window_options = eframe::NativeOptions {
+        initial_window_size: Some(vec2(1000.0, 515.0)),
+        ..Default::default()
+    };
+
+    let vco = Vco::default();
+
     let mut rack = Rack::new();
+    let vco_handle = rack.add_module(&vco);
+    rack.connect(vco_handle.output(VcoUnit::TRI_OUT), Rack::audio_output())?;
+    let mut audio_host = AudioHost::default();
 
-    let clock = rack.add_module(Clock::new(180.0));
-    let sequencer = rack.add_module(Sequencer::new(&[
-        61, 65, 68, 77, 61, 65, 68, 75, 61, 65, 68, 78, 78, 73, 73, 73,
-    ]));
-    let lfo = rack.add_module(LFO::new(0.1));
-    let osc = rack.add_module(VCO::new());
-    let adsr = rack.add_module(ADSR::default());
-    let amp = rack.add_module(VCA::default());
-    let filter = rack.add_module(VCF::new(1000.0, 2.0));
+    let panels = vec![(vco_handle, vco.create_panel())];
+    let app = ModularSynth::new(panels);
 
-    rack.connect(
-        clock.output(Clock::TRIGGER_OUT),
-        sequencer.input(Sequencer::TRIGGER_IN),
-    )?;
-    rack.connect(
-        sequencer.output(Sequencer::V_OCT_OUT),
-        osc.input(VCO::V_OCT_IN),
-    )?;
-    rack.connect(clock.output(Clock::TRIGGER_OUT), adsr.input(ADSR::GATE_IN))?;
-    rack.connect(adsr.output(ADSR::CV_OUT), amp.input(VCA::CV_IN))?;
-    rack.connect(osc.output(VCO::SAW_OUT), amp.input(VCA::AUDIO_IN))?;
-    rack.connect(amp.output(VCA::AUDIO_OUT), filter.input(VCF::AUDIO_IN))?;
-    rack.connect(lfo.output(LFO::TRI_OUT), filter.input(VCF::CUTOFF_IN))?;
-    rack.connect(filter.output(VCF::LOWPASS_OUT), Rack::audio_output())?;
-
-    AudioHost::default().run_forever(rack)?;
-    Ok(())
+    audio_host.start(rack)?;
+    eframe::run_native(Box::new(app), window_options);
 }

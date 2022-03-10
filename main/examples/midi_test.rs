@@ -6,10 +6,10 @@ use utility_modules::{amplifier::VCA, envelope::ADSR, midi::MidiIn};
 fn main() -> anyhow::Result<()> {
     let mut rack = Rack::new();
 
-    let midi = rack.add_module(MidiIn::new()?);
-    let osc = rack.add_module(VCO::new());
-    let adsr = rack.add_module(ADSR::default());
-    let amp = rack.add_module(VCA::default());
+    let midi = rack.add_module_old(MidiIn::new()?);
+    let osc = rack.add_module_old(VCO::new());
+    let adsr = rack.add_module_old(ADSR::default());
+    let amp = rack.add_module_old(VCA::default());
 
     rack.connect(midi.output(MidiIn::V_OCT_OUT), osc.input(VCO::V_OCT_IN))?;
     rack.connect(midi.output(MidiIn::GATE_OUT), adsr.input(ADSR::GATE_IN))?;
