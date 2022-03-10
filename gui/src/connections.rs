@@ -20,15 +20,23 @@ impl Connections {
         let mut pending_source = None;
         if let Some(interaction) = JackInteraction::get(ui) {
             match interaction {
-                JackInteraction::PendingInput(_, pos) => pending_source = Some(pos),
+                JackInteraction::PendingInput(input, pos) => {
+                    if self.input_is_empty(input) {
+                        pending_source = Some(pos);
+                    } else {
+                        JackInteraction::clear(ui);
+                    }
+                }
                 JackInteraction::PendingOutput(_, pos) => pending_source = Some(pos),
                 JackInteraction::CreateConnection(output, output_pos, input, input_pos) => {
-                    self.connections.push(Connection {
-                        _output: output,
-                        _input: input,
-                        output_pos,
-                        input_pos,
-                    });
+                    if self.input_is_empty(input) {
+                        self.connections.push(Connection {
+                            _output: output,
+                            input,
+                            output_pos,
+                            input_pos,
+                        });
+                    }
                     JackInteraction::clear(ui);
                 }
             }
@@ -51,6 +59,10 @@ impl Connections {
                 }
             }
         }
+    }
+
+    fn input_is_empty(&self, input: ModuleInput) -> bool {
+        !self.connections.iter().any(|c| c.input == input)
     }
 }
 
@@ -87,7 +99,7 @@ impl Cable {
 #[derive(Copy, Clone, Debug)]
 struct Connection {
     _output: ModuleOutput,
-    _input: ModuleInput,
+    input: ModuleInput,
     output_pos: Pos2,
     input_pos: Pos2,
 }

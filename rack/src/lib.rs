@@ -16,13 +16,13 @@ pub trait Module {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct ModuleHandle(pub usize);
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct ModuleInput {
     module: usize,
     channel: usize,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct ModuleOutput {
     module: usize,
     channel: usize,
