@@ -21,44 +21,25 @@ impl Connections {
         let mut pending_source = None;
         if let Some(interaction) = JackInteraction::get(ui) {
             match interaction {
-                JackInteraction::PendingInput(input, pos) => {
-                    if self.input_is_empty(input) {
-                        pending_source = Some(pos);
-                    } else {
-                        JackInteraction::clear(ui);
-                    }
-                }
+                JackInteraction::PendingInput(_, pos) => pending_source = Some(pos),
                 JackInteraction::PendingOutput(_, pos) => pending_source = Some(pos),
                 JackInteraction::CreateConnection(output, output_pos, input, input_pos) => {
-                    if self.input_is_empty(input) {
-                        host.send_message(AudioMessage::ConnectModules(output, input));
-                        self.connections.push(Connection {
-                            output,
-                            input,
-                            output_pos,
-                            input_pos,
-                        });
-                    }
+                    self.maybe_clear_input(input, host);
+                    host.send_message(AudioMessage::ConnectModules(output, input));
+                    self.connections.push(Connection {
+                        output,
+                        input,
+                        output_pos,
+                        input_pos,
+                    });
                     JackInteraction::clear(ui);
                 }
                 JackInteraction::ClearInput(input) => {
-                    if let Some(i) = self.connections.iter().position(|c| c.input == input) {
-                        host.send_message(AudioMessage::DisconnectModules(
-                            self.connections[i].output,
-                            input,
-                        ));
-                        self.connections.swap_remove(i);
-                    }
+                    self.maybe_clear_input(input, host);
                     JackInteraction::clear(ui);
                 }
                 JackInteraction::ClearOutput(output) => {
-                    while let Some(i) = self.connections.iter().position(|c| c.output == output) {
-                        host.send_message(AudioMessage::DisconnectModules(
-                            output,
-                            self.connections[i].input,
-                        ));
-                        self.connections.swap_remove(i);
-                    }
+                    self.clear_all_outputs(output, host);
                     JackInteraction::clear(ui);
                 }
             }
@@ -71,8 +52,10 @@ impl Connections {
 
         // Handle ongoing new connection:
         if let Some(src_pos) = pending_source {
-            // Use <esc> to cancel new connection.
-            if ui.ctx().input().key_pressed(Key::Escape) {
+            // Use <esc> or right click to cancel new connection.
+            if ui.ctx().input().key_pressed(Key::Escape)
+                || ui.input().pointer.button_down(PointerButton::Secondary)
+            {
                 JackInteraction::clear(ui);
             } else {
                 let hover_pos = ui.ctx().input().pointer.hover_pos();
@@ -83,8 +66,24 @@ impl Connections {
         }
     }
 
-    fn input_is_empty(&self, input: ModuleInput) -> bool {
-        !self.connections.iter().any(|c| c.input == input)
+    fn maybe_clear_input(&mut self, input: ModuleInput, host: &AudioHost) {
+        if let Some(i) = self.connections.iter().position(|c| c.input == input) {
+            host.send_message(AudioMessage::DisconnectModules(
+                self.connections[i].output,
+                input,
+            ));
+            self.connections.swap_remove(i);
+        }
+    }
+
+    fn clear_all_outputs(&mut self, output: ModuleOutput, host: &AudioHost) {
+        while let Some(i) = self.connections.iter().position(|c| c.output == output) {
+            host.send_message(AudioMessage::DisconnectModules(
+                output,
+                self.connections[i].input,
+            ));
+            self.connections.swap_remove(i);
+        }
     }
 }
 

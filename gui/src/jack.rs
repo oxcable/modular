@@ -45,7 +45,9 @@ impl Widget for Jack {
                 }
                 _ => (),
             }
-        } else if response.clicked_by(PointerButton::Secondary) {
+        } else if response.clicked_by(PointerButton::Secondary)
+            || (response.hovered() && ui.input().key_pressed(Key::Backspace))
+        {
             use JackInteraction::*;
             match self.type_ {
                 JackType::Output(output) => ClearOutput(output).update(ui),
