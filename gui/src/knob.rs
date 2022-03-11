@@ -23,7 +23,10 @@ impl<'a> Knob<'a> {
     }
 
     pub fn attenuverter(param: &'a dyn Parameter<Value = f32>) -> Self {
-        Knob::new(param).range(-1.0..=1.0).snap_to_center()
+        Knob::new(param)
+            .range(-1.0..=1.0)
+            .scale(0.5)
+            .snap_to_center()
     }
 
     pub fn range(mut self, range: RangeInclusive<f32>) -> Self {
@@ -52,7 +55,7 @@ impl<'a> Knob<'a> {
 
 impl<'a> Widget for Knob<'a> {
     fn ui(self, ui: &mut Ui) -> Response {
-        let radius = self.scale * ui.spacing().interact_size.y;
+        let radius = self.scale * 1.5 * ui.spacing().interact_size.y;
         let drag_height = 5.0 * radius;
 
         let desired_size = vec2(2.0 * radius, 2.0 * radius);
@@ -112,7 +115,8 @@ impl<'a> Widget for Knob<'a> {
 
             // Needle:
             let dir = radius * Vec2::angled(LEFT_ANGLE + ARC_LENGTH * normalized_value);
-            let stroke = Stroke::new(2.0 * self.scale, widget.fg_stroke.color);
+            let mut stroke = widget.fg_stroke;
+            stroke.width = (2.0 * self.scale).max(stroke.width);
             painter.line_segment([origin + 0.5 * dir, origin + dir], stroke);
         }
 

@@ -21,7 +21,7 @@ impl Default for TestPanel {
 
 impl Panel for TestPanel {
     fn width(&self) -> usize {
-        12
+        10
     }
 
     fn update(&mut self, handle: &ModuleHandle, ui: &mut egui::Ui) {
@@ -37,7 +37,6 @@ impl Panel for TestPanel {
                 ui.add(
                     Knob::new(&self.knob2)
                         .range(0.0..=5.0)
-                        .scale(2.0)
                         .hover_text(|v| format!("Value: {:0.1}", v)),
                 );
                 ui.label("Knob 2");
@@ -47,16 +46,16 @@ impl Panel for TestPanel {
         ui.add_space(20.0);
         ui.columns(2, |columns| {
             columns[0].vertical_centered(|ui| {
-                ui.add(Jack::input(handle.input(0)));
-                ui.add_space(5.0);
-                ui.add(Jack::input(handle.input(1)));
-                ui.label("Inputs");
-            });
-            columns[1].vertical_centered(|ui| {
                 ui.add(Jack::output(handle.output(0)));
                 ui.add_space(5.0);
                 ui.add(Jack::output(handle.output(1)));
                 ui.label("Outputs");
+            });
+            columns[1].vertical_centered(|ui| {
+                ui.add(Jack::input(handle.input(0)));
+                ui.add_space(5.0);
+                ui.add(Jack::input(handle.input(1)));
+                ui.label("Inputs");
             });
         });
         egui::TopBottomPanel::bottom("dark_mode").show(ui.ctx(), |ui| {
@@ -74,7 +73,7 @@ impl Panel for TestPanel {
 
 fn main() {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::Vec2::new(255.0, 540.0)),
+        initial_window_size: Some(egui::Vec2::new(215.0, 540.0)),
         ..Default::default()
     };
     let app = ModularSynth::new(

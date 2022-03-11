@@ -81,7 +81,7 @@ pub struct VcoPanel {}
 
 impl Panel for VcoPanel {
     fn width(&self) -> usize {
-        5
+        4
     }
 
     fn update(&mut self, handle: &module::ModuleHandle, ui: &mut egui::Ui) {

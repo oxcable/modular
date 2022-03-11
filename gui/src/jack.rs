@@ -21,7 +21,7 @@ impl Jack {
 
 impl Widget for Jack {
     fn ui(self, ui: &mut Ui) -> Response {
-        let radius = ui.spacing().interact_size.y;
+        let radius = 0.75 * ui.spacing().interact_size.y;
         let desired_size = radius * vec2(3.5, 2.0);
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::click());
 
@@ -57,6 +57,7 @@ impl Widget for Jack {
 
         // Draw:
         if ui.is_rect_visible(rect) {
+            let painter = ui.painter();
             let widget = ui.style().interact(&response);
 
             // Hexagon container:
@@ -66,17 +67,15 @@ impl Widget for Jack {
                 let dir = radius * vec2(angle.cos(), angle.sin());
                 hex_pts.push(origin + dir);
             }
-            ui.painter().add(Shape::convex_polygon(
+            painter.add(Shape::convex_polygon(
                 hex_pts,
                 widget.bg_fill,
                 widget.fg_stroke,
             ));
 
             // Jack interior:
-            ui.painter()
-                .circle_stroke(origin, 0.60 * radius, widget.fg_stroke);
-            ui.painter()
-                .circle_filled(origin, 0.45 * radius, widget.fg_stroke.color);
+            painter.circle_stroke(origin, 0.6 * radius, widget.fg_stroke);
+            painter.circle_filled(origin, 0.4 * radius, widget.fg_stroke.color);
 
             // Arrow:
             let arrow_dir = vec2(0.75 * radius, 0.0);
@@ -84,8 +83,7 @@ impl Widget for Jack {
                 JackType::Input(_) => rect.left_center(),
                 JackType::Output(_) => rect.right_center() - arrow_dir,
             };
-            ui.painter()
-                .arrow(arrow_origin, arrow_dir, widget.fg_stroke);
+            painter.arrow(arrow_origin, arrow_dir, widget.fg_stroke);
         }
 
         response

@@ -105,17 +105,13 @@ struct LfoPanel {
 
 impl Panel for LfoPanel {
     fn width(&self) -> usize {
-        5
+        4
     }
 
     fn update(&mut self, handle: &module::ModuleHandle, ui: &mut egui::Ui) {
         ui.heading("LFO");
         ui.add_space(20.0);
-        ui.add(
-            Knob::new(&self.params.frequency)
-                .range(0.0..=20.0)
-                .scale(1.8),
-        );
+        ui.add(Knob::new(&self.params.frequency).range(0.0..=20.0));
         ui.label("Freq");
         ui.add(Jack::input(handle.input(LfoUnit::FREQ_IN)));
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
