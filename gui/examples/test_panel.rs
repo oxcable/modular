@@ -2,7 +2,11 @@ use eframe::egui;
 
 use atomic_float::AtomicF32;
 use audio_host::AudioHost;
-use gui::{jack::Jack, knob::Knob, ModularSynth};
+use gui::{
+    jack::{self, Jack},
+    knob::Knob,
+    ModularSynth,
+};
 use module::{ModuleHandle, Panel, Parameter};
 
 struct TestPanel {
@@ -46,16 +50,20 @@ impl Panel for TestPanel {
         ui.add_space(20.0);
         ui.columns(2, |columns| {
             columns[0].vertical_centered(|ui| {
-                ui.add(Jack::output(handle.output(0)));
-                ui.add_space(5.0);
-                ui.add(Jack::output(handle.output(1)));
-                ui.label("Outputs");
+                jack::outputs(ui, |ui| {
+                    ui.add(Jack::output(handle.output(0)));
+                    ui.add_space(5.0);
+                    ui.add(Jack::output(handle.output(1)));
+                    ui.label("Outputs");
+                });
             });
             columns[1].vertical_centered(|ui| {
-                ui.add(Jack::input(handle.input(0)));
-                ui.add_space(5.0);
-                ui.add(Jack::input(handle.input(1)));
-                ui.label("Inputs");
+                jack::inputs(ui, |ui| {
+                    ui.add(Jack::input(handle.input(0)));
+                    ui.add_space(5.0);
+                    ui.add(Jack::input(handle.input(1)));
+                    ui.label("Inputs");
+                });
             });
         });
         egui::TopBottomPanel::bottom("dark_mode").show(ui.ctx(), |ui| {

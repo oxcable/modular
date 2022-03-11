@@ -1,6 +1,21 @@
 use eframe::egui::*;
 use module::{ModuleInput, ModuleOutput};
 
+pub fn inputs<R>(ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> InnerResponse<R> {
+    Frame::group(ui.style())
+        .margin(style::Margin::symmetric(1.0, 5.0))
+        .rounding(5.0)
+        .show(ui, |ui| add_contents(ui))
+}
+
+pub fn outputs<R>(ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> InnerResponse<R> {
+    Frame::group(ui.style())
+        .margin(style::Margin::symmetric(1.0, 5.0))
+        .fill(ui.visuals().code_bg_color)
+        .rounding(5.0)
+        .show(ui, |ui| add_contents(ui))
+}
+
 pub struct Jack {
     type_: JackType,
 }
@@ -22,7 +37,7 @@ impl Jack {
 impl Widget for Jack {
     fn ui(self, ui: &mut Ui) -> Response {
         let radius = 0.75 * ui.spacing().interact_size.y;
-        let desired_size = radius * vec2(3.5, 2.0);
+        let desired_size = radius * vec2(2.0, 2.0);
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::click());
 
         // Interact:
@@ -76,14 +91,6 @@ impl Widget for Jack {
             // Jack interior:
             painter.circle_stroke(origin, 0.6 * radius, widget.fg_stroke);
             painter.circle_filled(origin, 0.4 * radius, widget.fg_stroke.color);
-
-            // Arrow:
-            let arrow_dir = vec2(0.75 * radius, 0.0);
-            let arrow_origin = match self.type_ {
-                JackType::Input(_) => rect.left_center(),
-                JackType::Output(_) => rect.right_center() - arrow_dir,
-            };
-            painter.arrow(arrow_origin, arrow_dir, widget.fg_stroke);
         }
 
         response

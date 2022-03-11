@@ -3,7 +3,10 @@ use std::{f32::consts::PI, sync::Arc};
 use atomic_float::AtomicF32;
 use egui::{Align, Layout};
 use eurorack::{Voltage, CV_VOLTS};
-use gui::{jack::Jack, knob::Knob};
+use gui::{
+    jack::{self, Jack},
+    knob::Knob,
+};
 use module::{AudioUnit, Module, Panel, Parameter};
 
 #[derive(Default)]
@@ -115,14 +118,16 @@ impl Panel for LfoPanel {
         ui.label("Freq");
         ui.add(Jack::input(handle.input(LfoUnit::FREQ_IN)));
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-            ui.add(Jack::output(handle.output(LfoUnit::TRI_OUT)));
-            ui.label("Tri");
-            ui.add(Jack::output(handle.output(LfoUnit::SQUARE_OUT)));
-            ui.label("Square");
-            ui.add(Jack::output(handle.output(LfoUnit::SAW_OUT)));
-            ui.label("Saw");
-            ui.add(Jack::output(handle.output(LfoUnit::SINE_OUT)));
-            ui.label("Sine");
+            jack::outputs(ui, |ui| {
+                ui.add(Jack::output(handle.output(LfoUnit::TRI_OUT)));
+                ui.label("Tri");
+                ui.add(Jack::output(handle.output(LfoUnit::SQUARE_OUT)));
+                ui.label("Square");
+                ui.add(Jack::output(handle.output(LfoUnit::SAW_OUT)));
+                ui.label("Saw");
+                ui.add(Jack::output(handle.output(LfoUnit::SINE_OUT)));
+                ui.label("Sine");
+            });
         });
     }
 }

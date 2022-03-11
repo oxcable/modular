@@ -3,7 +3,10 @@ use std::sync::Arc;
 use atomic_float::AtomicF32;
 use egui::{Align, Layout};
 use eurorack::{Voltage, CV_VOLTS};
-use gui::{jack::Jack, knob::Knob};
+use gui::{
+    jack::{self, Jack},
+    knob::Knob,
+};
 use module::{AudioUnit, Module, Panel, Parameter};
 use rack::ModuleIO;
 
@@ -98,10 +101,14 @@ impl Panel for VcaPanel {
         ui.add(Knob::attenuverter(&self.0.gain_atten));
         ui.add(Jack::input(handle.input(VcaUnit::CV_IN)));
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-            ui.add(Jack::output(handle.output(VcaUnit::AUDIO_OUT)));
-            ui.label("Out");
-            ui.add(Jack::input(handle.input(VcaUnit::AUDIO_IN)));
-            ui.label("In");
+            jack::outputs(ui, |ui| {
+                ui.add(Jack::output(handle.output(VcaUnit::AUDIO_OUT)));
+                ui.label("Out");
+            });
+            jack::inputs(ui, |ui| {
+                ui.add(Jack::input(handle.input(VcaUnit::AUDIO_IN)));
+                ui.label("In");
+            });
         });
     }
 }
