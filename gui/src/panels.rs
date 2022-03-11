@@ -45,8 +45,8 @@ impl Panel for AudioOutputPanel {
         ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
             jack::inputs(ui, |ui| {
                 ui.add(Jack::input(handle.input(0)));
-                ui.label("Out");
             });
+            ui.label("Out");
         });
     }
 }
