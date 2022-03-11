@@ -1,3 +1,4 @@
+use egui::{Align, Layout};
 use eurorack::{Voltage, AUDIO_VOLTS, V_OCT_F0};
 use gui::jack::Jack;
 use module::{AudioUnit, Module, Panel};
@@ -85,16 +86,17 @@ impl Panel for VcoPanel {
 
     fn update(&mut self, handle: &module::ModuleHandle, ui: &mut egui::Ui) {
         ui.heading("VCO");
-        ui.add_space(100.0);
+        ui.add_space(20.0);
         ui.add(Jack::input(handle.input(VcoUnit::V_OCT_IN)));
         ui.label("V/Oct");
-        ui.add_space(100.0);
-        ui.add(Jack::output(handle.output(VcoUnit::SAW_OUT)));
-        ui.label("Saw");
-        ui.add(Jack::output(handle.output(VcoUnit::SQUARE_OUT)));
-        ui.label("Square");
-        ui.add(Jack::output(handle.output(VcoUnit::TRI_OUT)));
-        ui.label("Tri");
+        ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
+            ui.add(Jack::output(handle.output(VcoUnit::TRI_OUT)));
+            ui.label("Tri");
+            ui.add(Jack::output(handle.output(VcoUnit::SQUARE_OUT)));
+            ui.label("Square");
+            ui.add(Jack::output(handle.output(VcoUnit::SAW_OUT)));
+            ui.label("Saw");
+        });
     }
 }
 

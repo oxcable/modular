@@ -12,7 +12,8 @@ impl Panel for AudioOutputPanel {
 
     fn update(&mut self, handle: &ModuleHandle, ui: &mut egui::Ui) {
         ui.heading("Audio\nOut");
-        ui.add_space(370.0);
-        ui.add(Jack::input(handle.input(0)));
+        ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+            ui.add(Jack::input(handle.input(0)));
+        });
     }
 }
