@@ -86,7 +86,7 @@ impl AudioUnit for LfoUnit {
         freq += 20.0 * inputs[Self::FREQ_IN].unwrap_or(0.0) / CV_VOLTS;
 
         self.phase = (self.phase + freq / self.sample_rate) % 1.0;
-        outputs[Self::SINE_OUT] = CV_VOLTS * ((2.0 * PI * self.phase).sin() + 1.0);
+        outputs[Self::SINE_OUT] = CV_VOLTS * ((2.0 * PI * self.phase).sin() + 1.0) / 2.0;
         outputs[Self::SAW_OUT] = CV_VOLTS * self.phase;
         outputs[Self::SQUARE_OUT] = CV_VOLTS * if self.phase < 0.5 { 1.0 } else { 0.0 };
         outputs[Self::TRI_OUT] = CV_VOLTS

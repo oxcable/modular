@@ -77,12 +77,16 @@ impl Rack {
             self.output_channel = None;
             Ok(())
         } else {
+            // Find and remove the connection.
             let i = self
                 .patch_cables
                 .iter()
                 .position(|c| c.0 == src && c.1 == dst)
                 .ok_or(RackError::NotConnected)?;
             self.patch_cables.swap_remove(i);
+            // Reset the destination input, as disconnected inputs do not get
+            // updated every tick.
+            self.modules[dst.module.0].inputs[dst.channel] = None;
             Ok(())
         }
     }
