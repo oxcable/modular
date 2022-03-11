@@ -2,9 +2,6 @@ use audio_host::AudioHost;
 use eframe::{egui, epi};
 use module::{ModuleHandle, Panel};
 
-pub mod jack;
-pub mod knob;
-
 mod connections;
 mod panels;
 

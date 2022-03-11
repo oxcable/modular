@@ -9,5 +9,6 @@ members = [
     "rack",
     "sequencer",
     "utility_modules",
+    "widgets",
     "main",
 ]

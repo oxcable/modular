@@ -1,7 +1,7 @@
 use eframe::egui;
 use module::{ModuleHandle, Panel};
 
-use crate::jack::{self, Jack};
+use widgets::jack::{self, Jack};
 
 pub(crate) struct AudioOutputPanel;
 

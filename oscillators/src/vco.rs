@@ -1,7 +1,9 @@
-use egui::{Align, Layout};
 use eurorack::{Voltage, AUDIO_VOLTS, V_OCT_F0};
-use gui::jack::{self, Jack};
 use module::{AudioUnit, Module, Panel};
+use widgets::{
+    egui::{self, Align, Layout},
+    jack::{self, Jack},
+};
 
 #[derive(Default)]
 pub struct Vco;

@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, ops::RangeInclusive};
 
-use eframe::egui::*;
+use egui::*;
 use module::Parameter;
 
 pub struct Knob<'a> {

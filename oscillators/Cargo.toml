@@ -5,8 +5,7 @@ edition = "2021"
 
 [dependencies]
 atomic_float = "0.1.0"
-egui = "0.17.0"
 eurorack = { path = "../eurorack/" }
-gui = { path = "../gui/" }
 module = { path = "../module/" }
 rack = { path = "../rack/" }
+widgets = { path = "../widgets/" }

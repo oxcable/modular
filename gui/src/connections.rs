@@ -1,9 +1,8 @@
+use ::widgets::jack::JackInteraction;
 use audio_host::{AudioHost, AudioMessage};
 use eframe::egui::*;
 use eframe::epaint::QuadraticBezierShape;
 use module::{ModuleInput, ModuleOutput};
-
-use crate::jack::JackInteraction;
 
 pub(crate) struct Connections {
     connections: Vec<Connection>,

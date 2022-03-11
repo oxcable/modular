@@ -1,4 +1,4 @@
-use eframe::egui::*;
+use egui::*;
 use module::{ModuleInput, ModuleOutput};
 
 pub fn inputs<R>(ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> InnerResponse<R> {
@@ -104,7 +104,7 @@ enum JackType {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub(crate) enum JackInteraction {
+pub enum JackInteraction {
     PendingInput(ModuleInput, Pos2),
     PendingOutput(ModuleOutput, Pos2),
     CreateConnection(ModuleOutput, Pos2, ModuleInput, Pos2),
@@ -113,15 +113,15 @@ pub(crate) enum JackInteraction {
 }
 
 impl JackInteraction {
-    pub(crate) fn get(ui: &Ui) -> Option<Self> {
+    pub fn get(ui: &Ui) -> Option<Self> {
         ui.memory().data.get_temp::<Self>(Id::null())
     }
 
-    pub(crate) fn update(self, ui: &Ui) {
+    pub fn update(self, ui: &Ui) {
         ui.memory().data.insert_temp::<Self>(Id::null(), self);
     }
 
-    pub(crate) fn clear(ui: &Ui) {
+    pub fn clear(ui: &Ui) {
         ui.memory().data.remove::<Self>(Id::null());
     }
 }

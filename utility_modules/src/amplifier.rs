@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use atomic_float::AtomicF32;
-use egui::{Align, Layout};
 use eurorack::{Voltage, CV_VOLTS};
-use gui::{
+use module::{AudioUnit, Module, Panel, Parameter};
+use rack::ModuleIO;
+use widgets::{
+    egui::{self, Align, Layout},
     jack::{self, Jack},
     knob::Knob,
 };
-use module::{AudioUnit, Module, Panel, Parameter};
-use rack::ModuleIO;
 
 #[derive(Default)]
 pub struct Vca {
