@@ -64,7 +64,7 @@ impl VcaUnit {
     fn new(gain_db: f32) -> Self {
         VcaUnit(Arc::new(VcaParams {
             gain: AtomicF32::new(10f32.powf(gain_db / 20.0)),
-            gain_atten: AtomicF32::new(0.0),
+            gain_atten: AtomicF32::new(1.0),
         }))
     }
 }
