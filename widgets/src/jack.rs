@@ -1,3 +1,5 @@
+use std::f32::consts::FRAC_PI_3;
+
 use egui::*;
 use module::{ModuleInput, ModuleOutput};
 
@@ -37,7 +39,7 @@ impl Jack {
 impl Widget for Jack {
     fn ui(self, ui: &mut Ui) -> Response {
         let radius = 0.75 * ui.spacing().interact_size.y;
-        let desired_size = radius * vec2(2.0, 2.0);
+        let desired_size = 2.0 * radius * vec2(1.0, FRAC_PI_3.sin());
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::click());
 
         // Interact:
@@ -78,7 +80,7 @@ impl Widget for Jack {
             // Hexagon container:
             let mut hex_pts = Vec::new();
             for i in 0..=6 {
-                let angle = i as f32 * std::f32::consts::FRAC_PI_3;
+                let angle = i as f32 * FRAC_PI_3;
                 let dir = radius * vec2(angle.cos(), angle.sin());
                 hex_pts.push(origin + dir);
             }
@@ -89,7 +91,12 @@ impl Widget for Jack {
             ));
 
             // Jack interior:
-            painter.circle_stroke(origin, 0.6 * radius, widget.fg_stroke);
+            painter.circle(
+                origin,
+                0.6 * radius,
+                ui.visuals().faint_bg_color,
+                widget.fg_stroke,
+            );
             painter.circle_filled(origin, 0.4 * radius, widget.fg_stroke.color);
         }
 

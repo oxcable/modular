@@ -8,6 +8,7 @@ use widgets::{
     egui::{self, Align, Layout},
     jack::{self, Jack},
     knob::Knob,
+    signal::SignalFlow,
 };
 
 #[derive(Default)]
@@ -97,18 +98,19 @@ impl Panel for VcaPanel {
         ui.heading("VCA");
         ui.add_space(20.0);
         ui.add(Knob::new(&self.0.gain).range(0.0..=1.0));
+        ui.add(SignalFlow::down_arrow());
         ui.label("Gain");
+        ui.add(SignalFlow::up_arrow());
         ui.add(Knob::attenuverter(&self.0.gain_atten));
+        ui.add(SignalFlow::join_vertical());
         ui.add(Jack::input(handle.input(VcaUnit::CV_IN)));
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
             jack::outputs(ui, |ui| {
                 ui.add(Jack::output(handle.output(VcaUnit::AUDIO_OUT)));
-                ui.label("Out");
             });
-            jack::inputs(ui, |ui| {
-                ui.add(Jack::input(handle.input(VcaUnit::AUDIO_IN)));
-                ui.label("In");
-            });
+            ui.add(SignalFlow::join_vertical());
+            ui.add(Jack::input(handle.input(VcaUnit::AUDIO_IN)));
+            ui.label("Audio");
         });
     }
 }
