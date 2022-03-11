@@ -2,6 +2,7 @@ use eurorack::{Voltage, AUDIO_VOLTS, V_OCT_F0};
 use module::{AudioUnit, Module, Panel};
 use widgets::{
     egui::{self, Align, Layout},
+    icons::Icon,
     jack::{self, Jack},
 };
 
@@ -94,11 +95,11 @@ impl Panel for VcoPanel {
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
             jack::outputs(ui, |ui| {
                 ui.add(Jack::output(handle.output(VcoUnit::TRI_OUT)));
-                ui.label("Tri");
+                ui.add(Icon::triangle_wave());
                 ui.add(Jack::output(handle.output(VcoUnit::SQUARE_OUT)));
-                ui.label("Square");
+                ui.add(Icon::square_wave());
                 ui.add(Jack::output(handle.output(VcoUnit::SAW_OUT)));
-                ui.label("Saw");
+                ui.add(Icon::saw_wave());
             });
         });
     }

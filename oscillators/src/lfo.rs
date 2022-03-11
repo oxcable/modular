@@ -5,6 +5,7 @@ use eurorack::{Voltage, CV_VOLTS};
 use module::{AudioUnit, Module, Panel, Parameter};
 use widgets::{
     egui::{self, Align, Layout},
+    icons::Icon,
     jack::{self, Jack},
     knob::Knob,
 };
@@ -120,13 +121,13 @@ impl Panel for LfoPanel {
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
             jack::outputs(ui, |ui| {
                 ui.add(Jack::output(handle.output(LfoUnit::TRI_OUT)));
-                ui.label("Tri");
+                ui.add(Icon::triangle_wave());
                 ui.add(Jack::output(handle.output(LfoUnit::SQUARE_OUT)));
-                ui.label("Square");
+                ui.add(Icon::square_wave());
                 ui.add(Jack::output(handle.output(LfoUnit::SAW_OUT)));
-                ui.label("Saw");
+                ui.add(Icon::saw_wave());
                 ui.add(Jack::output(handle.output(LfoUnit::SINE_OUT)));
-                ui.label("Sine");
+                ui.add(Icon::sine_wave());
             });
         });
     }

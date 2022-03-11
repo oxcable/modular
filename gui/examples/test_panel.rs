@@ -5,6 +5,7 @@ use audio_host::AudioHost;
 use gui::ModularSynth;
 use module::{ModuleHandle, Panel, Parameter};
 use widgets::{
+    icons::Icon,
     jack::{self, Jack},
     knob::Knob,
 };
@@ -66,6 +67,17 @@ impl Panel for TestPanel {
                 });
             });
         });
+        ui.add_space(20.0);
+        ui.group(|ui| {
+            ui.label("Icons");
+            ui.columns(4, |columns| {
+                columns[0].vertical_centered(|ui| ui.add(Icon::sine_wave()));
+                columns[1].vertical_centered(|ui| ui.add(Icon::saw_wave()));
+                columns[2].vertical_centered(|ui| ui.add(Icon::square_wave()));
+                columns[3].vertical_centered(|ui| ui.add(Icon::triangle_wave()));
+            });
+        });
+
         egui::TopBottomPanel::bottom("dark_mode").show(ui.ctx(), |ui| {
             ui.horizontal(|ui| {
                 let mut debug_on_hover = ui.ctx().debug_on_hover();
