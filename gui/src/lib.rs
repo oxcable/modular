@@ -78,7 +78,7 @@ impl epi::App for ModularSynth {
             .insert(TextStyle::Body, FontId::new(18.0, regular.clone()));
         style
             .text_styles
-            .insert(TextStyle::Small, FontId::new(12.0, regular));
+            .insert(TextStyle::Small, FontId::new(14.0, regular));
         ctx.set_style(style);
     }
 

@@ -13,8 +13,8 @@ struct TestPanel {
 impl Default for TestPanel {
     fn default() -> Self {
         TestPanel {
-            knob1: AtomicF32::new(0.5),
-            knob2: AtomicF32::new(0.0),
+            knob1: AtomicF32::new(0.0),
+            knob2: AtomicF32::new(2.5),
         }
     }
 }
@@ -29,12 +29,17 @@ impl Panel for TestPanel {
         ui.add_space(20.0);
         ui.columns(2, |columns| {
             columns[0].vertical_centered(|ui| {
-                ui.add(Knob::new(&self.knob1));
+                ui.add(Knob::attenuverter(&self.knob1));
                 ui.label("Knob 1");
                 ui.small(format!("{:0.2}", self.knob1.read()));
             });
             columns[1].vertical_centered(|ui| {
-                ui.add(Knob::new(&self.knob2).range(-1.0..=1.0).scale(2.0));
+                ui.add(
+                    Knob::new(&self.knob2)
+                        .range(0.0..=5.0)
+                        .scale(2.0)
+                        .hover_text(|v| format!("Value: {:0.1}", v)),
+                );
                 ui.label("Knob 2");
                 ui.small(format!("{:0.2}", self.knob2.read()));
             });
