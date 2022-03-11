@@ -43,6 +43,15 @@ impl epi::App for ModularSynth {
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
+        let cmd_shift = egui::Modifiers {
+            command: true,
+            shift: true,
+            ..Default::default()
+        };
+        if ctx.input_mut().consume_key(cmd_shift, egui::Key::D) {
+            ctx.set_debug_on_hover(!ctx.debug_on_hover());
+        }
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 for (handle, panel) in &mut self.panels {

@@ -68,6 +68,13 @@ impl Panel for TestPanel {
         });
         egui::TopBottomPanel::bottom("dark_mode").show(ui.ctx(), |ui| {
             ui.horizontal(|ui| {
+                let mut debug_on_hover = ui.ctx().debug_on_hover();
+                ui.checkbox(
+                    &mut debug_on_hover,
+                    egui::RichText::small("Debug mode".into()),
+                );
+                ui.ctx().set_debug_on_hover(debug_on_hover);
+
                 egui::global_dark_light_mode_switch(ui);
                 ui.small(if ui.visuals().dark_mode {
                     "Dark mode"
