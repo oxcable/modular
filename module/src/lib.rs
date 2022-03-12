@@ -1,4 +1,11 @@
-use std::sync::atomic::Ordering;
+// We must manually implememnt hash on Module{Input,Output} to include their type ID; otherwise they
+// hash to the same value. This implememntion is still consistent with the derived PartialEq.
+#![allow(clippy::derive_hash_xor_eq)]
+
+use std::{
+    hash::{Hash, Hasher},
+    sync::atomic::Ordering,
+};
 
 use eurorack::Voltage;
 
@@ -48,6 +55,29 @@ impl ModuleHandle {
             module: *self,
             channel,
         }
+    }
+}
+
+impl Hash for ModuleHandle {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        std::any::TypeId::of::<Self>().hash(state);
+        self.0.hash(state);
+    }
+}
+
+impl Hash for ModuleInput {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        std::any::TypeId::of::<Self>().hash(state);
+        self.module.hash(state);
+        self.channel.hash(state);
+    }
+}
+
+impl Hash for ModuleOutput {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        std::any::TypeId::of::<Self>().hash(state);
+        self.module.hash(state);
+        self.channel.hash(state);
     }
 }
 

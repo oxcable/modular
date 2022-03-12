@@ -53,12 +53,14 @@ impl epi::App for ModularSynth {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                for (handle, panel) in &mut self.panels {
-                    ui.add(panels::panel_to_widget(handle, panel.as_mut()));
-                }
+            egui::ScrollArea::horizontal().show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    for (handle, panel) in &mut self.panels {
+                        ui.add(panels::panel_to_widget(handle, panel.as_mut()));
+                    }
+                });
+                self.connections.update(&self.audio_host, ui);
             });
-            self.connections.update(&self.audio_host, ui);
         });
     }
 }

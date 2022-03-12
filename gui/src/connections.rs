@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use ::widgets::jack::JackInteraction;
 use audio_host::{AudioHost, AudioMessage};
 use eframe::egui::*;
@@ -20,17 +22,12 @@ impl Connections {
         let mut pending_source = None;
         if let Some(interaction) = JackInteraction::get(ui) {
             match interaction {
-                JackInteraction::PendingInput(_, pos) => pending_source = Some(pos),
-                JackInteraction::PendingOutput(_, pos) => pending_source = Some(pos),
-                JackInteraction::CreateConnection(output, output_pos, input, input_pos) => {
+                JackInteraction::PendingInput(input) => pending_source = locate(ui, input),
+                JackInteraction::PendingOutput(output) => pending_source = locate(ui, output),
+                JackInteraction::CreateConnection(output, input) => {
                     self.maybe_clear_input(input, host);
                     host.send_message(AudioMessage::ConnectModules(output, input));
-                    self.connections.push(Connection {
-                        output,
-                        input,
-                        output_pos,
-                        input_pos,
-                    });
+                    self.connections.push(Connection { output, input });
                     JackInteraction::clear(ui);
                 }
                 JackInteraction::ClearInput(input) => {
@@ -46,7 +43,7 @@ impl Connections {
 
         // Draw existing connections:
         for c in &self.connections {
-            Cable::new(c.output_pos, c.input_pos).draw(ui);
+            Cable::new(locate(ui, c.output).unwrap(), locate(ui, c.input).unwrap()).draw(ui);
         }
 
         // Handle ongoing new connection:
@@ -120,6 +117,12 @@ impl Cable {
 struct Connection {
     output: ModuleOutput,
     input: ModuleInput,
-    output_pos: Pos2,
-    input_pos: Pos2,
+}
+
+fn locate<T>(ui: &Ui, io: T) -> Option<Pos2>
+where
+    T: Hash,
+{
+    let id = Id::new(io);
+    ui.memory().data.get_temp(id)
 }

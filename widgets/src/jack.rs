@@ -1,4 +1,4 @@
-use std::f32::consts::FRAC_PI_3;
+use std::{f32::consts::FRAC_PI_3, hash::Hash};
 
 use egui::*;
 use module::{ModuleInput, ModuleOutput};
@@ -42,24 +42,26 @@ impl Widget for Jack {
         let desired_size = 2.0 * radius * vec2(1.0, FRAC_PI_3.sin());
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::click());
 
-        // Interact:
+        // Update our position, for cable drawing:
         let origin = rect.center();
+        match self.type_ {
+            JackType::Input(input) => update_position(ui, input, origin),
+            JackType::Output(output) => update_position(ui, output, origin),
+        }
+
+        // Interact:
         if response.clicked_by(PointerButton::Primary) {
             use JackInteraction::*;
             use JackType::*;
             match (self.type_, JackInteraction::get(ui)) {
-                (Output(output), Some(PendingInput(input, input_pos))) => {
-                    CreateConnection(output, origin, input, input_pos).update(ui);
+                (Output(output), Some(PendingInput(input))) => {
+                    CreateConnection(output, input).update(ui);
                 }
-                (Input(input), Some(PendingOutput(output, output_pos))) => {
-                    CreateConnection(output, output_pos, input, origin).update(ui);
+                (Input(input), Some(PendingOutput(output))) => {
+                    CreateConnection(output, input).update(ui);
                 }
-                (Output(output), None) => {
-                    PendingOutput(output, origin).update(ui);
-                }
-                (Input(input), None) => {
-                    PendingInput(input, origin).update(ui);
-                }
+                (Output(output), None) => PendingOutput(output).update(ui),
+                (Input(input), None) => PendingInput(input).update(ui),
                 _ => (),
             }
         } else if response.clicked_by(PointerButton::Secondary)
@@ -112,9 +114,9 @@ enum JackType {
 
 #[derive(Copy, Clone, Debug)]
 pub enum JackInteraction {
-    PendingInput(ModuleInput, Pos2),
-    PendingOutput(ModuleOutput, Pos2),
-    CreateConnection(ModuleOutput, Pos2, ModuleInput, Pos2),
+    PendingInput(ModuleInput),
+    PendingOutput(ModuleOutput),
+    CreateConnection(ModuleOutput, ModuleInput),
     ClearInput(ModuleInput),
     ClearOutput(ModuleOutput),
 }
@@ -131,4 +133,13 @@ impl JackInteraction {
     pub fn clear(ui: &Ui) {
         ui.memory().data.remove::<Self>(Id::null());
     }
+}
+
+fn update_position<T>(ui: &Ui, io: T, position: Pos2)
+where
+    T: Hash,
+{
+    let id = Id::new(io);
+    ui.memory().data.remove::<Pos2>(id);
+    ui.memory().data.insert_temp(id, position)
 }

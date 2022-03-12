@@ -96,7 +96,7 @@ impl Panel for TestPanel {
 
 fn main() {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::Vec2::new(215.0, 540.0)),
+        initial_window_size: Some(egui::Vec2::new(215.0, 550.0)),
         ..Default::default()
     };
     let app = ModularSynth::new(
