@@ -6,7 +6,7 @@ use module::Parameter;
 pub struct Knob<'a> {
     param: &'a dyn Parameter<Value = f32>,
     scale: f32,
-    range: RangeInclusive<f32>,
+    range: Range,
     snap_to_center: bool,
     hover_text: Box<dyn Fn(f32) -> String>,
 }
@@ -16,7 +16,7 @@ impl<'a> Knob<'a> {
         Knob {
             param,
             scale: 1.0,
-            range: 0.0..=1.0,
+            range: Range::Linear(0.0..=1.0),
             snap_to_center: false,
             hover_text: Box::new(|v| format!("{:0.3}", v)),
         }
@@ -29,8 +29,19 @@ impl<'a> Knob<'a> {
             .snap_to_center()
     }
 
+    pub fn frequency(param: &'a dyn Parameter<Value = f32>) -> Self {
+        Knob::new(param)
+            .logarithmic(20.0..=20_000.0)
+            .hover_text(|v| format!("{:.0} Hz", v))
+    }
+
     pub fn range(mut self, range: RangeInclusive<f32>) -> Self {
-        self.range = range;
+        self.range = Range::Linear(range);
+        self
+    }
+
+    pub fn logarithmic(mut self, range: RangeInclusive<f32>) -> Self {
+        self.range = Range::Logarithmic(range);
         self
     }
 
@@ -64,7 +75,7 @@ impl<'a> Widget for Knob<'a> {
 
         // Interact:
         let mut value = self.param.read();
-        let mut normalized_value = remap_clamp(value, self.range.clone(), 0.0..=1.0);
+        let mut normalized_value = self.range.to_normal(value);
         if response.dragged() {
             ui.output().cursor_icon = CursorIcon::Grabbing;
             let precise = ui.ctx().input().modifiers.shift;
@@ -74,7 +85,7 @@ impl<'a> Widget for Knob<'a> {
                 if self.snap_to_center && !precise && value_near(normalized_value, 0.5) {
                     normalized_value = 0.5;
                 }
-                value = remap(normalized_value, 0.0..=1.0, self.range.clone());
+                value = self.range.from_normal(normalized_value);
                 self.param.write(value);
                 response.mark_changed();
             }
@@ -121,6 +132,30 @@ impl<'a> Widget for Knob<'a> {
         }
 
         response
+    }
+}
+
+#[derive(Clone, Debug)]
+enum Range {
+    Linear(RangeInclusive<f32>),
+    Logarithmic(RangeInclusive<f32>),
+}
+
+impl Range {
+    fn to_normal(&self, value: f32) -> f32 {
+        match self {
+            Self::Linear(range) => remap_clamp(value, range.clone(), 0.0..=1.0),
+            Self::Logarithmic(range) => {
+                remap_clamp(value, range.clone(), 1.0..=100.0).log10() / 2.0
+            }
+        }
+    }
+
+    fn from_normal(&self, normal: f32) -> f32 {
+        match self {
+            Self::Linear(range) => remap(normal, 0.0..=1.0, range.clone()),
+            Self::Logarithmic(range) => remap(10f32.powf(2.0 * normal), 1.0..=100.0, range.clone()),
+        }
     }
 }
 

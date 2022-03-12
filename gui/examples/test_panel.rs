@@ -19,7 +19,7 @@ impl Default for TestPanel {
     fn default() -> Self {
         TestPanel {
             knob1: AtomicF32::new(0.0),
-            knob2: AtomicF32::new(2.5),
+            knob2: AtomicF32::new(1800.0),
         }
     }
 }
@@ -39,13 +39,9 @@ impl Panel for TestPanel {
                 ui.small(format!("{:0.2}", self.knob1.read()));
             });
             columns[1].vertical_centered(|ui| {
-                ui.add(
-                    Knob::new(&self.knob2)
-                        .range(0.0..=5.0)
-                        .hover_text(|v| format!("Value: {:0.1}", v)),
-                );
+                ui.add(Knob::frequency(&self.knob2));
                 ui.label("Knob 2");
-                ui.small(format!("{:0.2}", self.knob2.read()));
+                ui.small(format!("{:.0} Hz", self.knob2.read()));
             });
         });
         ui.add_space(20.0);
