@@ -1,5 +1,6 @@
 use audio_host::AudioHost;
 use eframe::egui::vec2;
+use filters::Vcf;
 use gui::ModularSynth;
 use module::Module;
 use oscillators::{lfo::Lfo, vco::Vco};
@@ -15,16 +16,19 @@ fn main() -> anyhow::Result<()> {
     let lfo = Lfo::default();
     let vco = Vco::default();
     let vca = Vca::default();
+    let vcf = Vcf::default();
 
     let mut rack = Rack::new();
     let lfo_handle = rack.add_module(&lfo);
     let vco_handle = rack.add_module(&vco);
     let vca_handle = rack.add_module(&vca);
+    let vcf_handle = rack.add_module(&vcf);
 
     let panels = vec![
         (lfo_handle, lfo.create_panel()),
         (vco_handle, vco.create_panel()),
         (vca_handle, vca.create_panel()),
+        (vcf_handle, vcf.create_panel()),
     ];
 
     let mut audio_host = AudioHost::default();

@@ -1,23 +1,74 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, sync::Arc};
 
-use rack::{
-    voltage::{Voltage, CV_VOLTS},
-    Module, ModuleIO,
+use atomic_float::AtomicF32;
+use eurorack::{Voltage, CV_VOLTS};
+use module::{AudioUnit, Module, Panel, Parameter};
+use widgets::{
+    egui,
+    jack::{self, Jack},
+    knob::Knob,
+    signal::SignalFlow,
 };
 
-pub struct VCF {
+#[derive(Default)]
+pub struct Vcf {
+    params: Arc<VcfParams>,
+}
+
+impl Module for Vcf {
+    fn inputs(&self) -> usize {
+        3
+    }
+
+    fn outputs(&self) -> usize {
+        3
+    }
+
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+        Box::new(VcfUnit {
+            params: self.params.clone(),
+            sample_rate: 0.0,
+            last_out: [0.0; 3],
+        })
+    }
+
+    fn create_panel(&self) -> Box<dyn Panel> {
+        Box::new(VcfPanel(self.params.clone()))
+    }
+}
+
+struct VcfParams {
+    cutoff: AtomicF32,
+    cutoff_atten: AtomicF32,
+    resonance: AtomicF32,
+    resonance_atten: AtomicF32,
+}
+
+impl Default for VcfParams {
+    fn default() -> Self {
+        VcfParams {
+            cutoff: AtomicF32::new(20_000.0),
+            cutoff_atten: AtomicF32::new(0.0),
+            resonance: AtomicF32::new(1.0),
+            resonance_atten: AtomicF32::new(0.0),
+        }
+    }
+}
+
+pub struct VcfUnit {
+    params: Arc<VcfParams>,
     sample_rate: f32,
-    cutoff: f32,
-    resonance: f32,
     last_out: [Voltage; 3],
 }
 
-impl ModuleIO for VCF {
+// Temporarily re-export the old API/name.
+pub type VCF = VcfUnit;
+impl rack::ModuleIO for VcfUnit {
     const INPUTS: usize = 3;
     const OUTPUTS: usize = 3;
 }
 
-impl VCF {
+impl VcfUnit {
     pub const CUTOFF_IN: usize = 0;
     pub const RESONANCE_IN: usize = 1;
     pub const AUDIO_IN: usize = 2;
@@ -28,16 +79,20 @@ impl VCF {
 
     #[allow(clippy::new_without_default)]
     pub fn new(cutoff: f32, resonance: f32) -> Self {
-        VCF {
+        VcfUnit {
+            params: Arc::new(VcfParams {
+                cutoff: AtomicF32::new(cutoff),
+                cutoff_atten: AtomicF32::new(1.0),
+                resonance: AtomicF32::new(resonance),
+                resonance_atten: AtomicF32::new(1.0),
+            }),
             sample_rate: 0.0,
-            cutoff,
-            resonance,
             last_out: [0.0; 3],
         }
     }
 }
 
-impl Module for VCF {
+impl AudioUnit for VcfUnit {
     fn reset(&mut self, sample_rate: usize) {
         self.sample_rate = sample_rate as f32;
     }
@@ -51,8 +106,12 @@ impl Module for VCF {
         //
         // Additionally, the current resonance mapping is arbitrary and could use more tuning.
         let cutoff_in = inputs[Self::CUTOFF_IN].unwrap_or(0.0) / CV_VOLTS * self.sample_rate / 6.0;
-        let cutoff = (self.cutoff + cutoff_in).clamp(0.0, self.sample_rate / 6.0);
-        let resonance = self.resonance + 0.5 * inputs[Self::RESONANCE_IN].unwrap_or(0.0);
+        let resonance_in = inputs[Self::RESONANCE_IN].unwrap_or(0.0);
+
+        let cutoff = (self.params.cutoff.read() + self.params.cutoff_atten.read() * cutoff_in)
+            .clamp(0.0, self.sample_rate / 6.0);
+        let resonance =
+            self.params.resonance.read() + 0.5 * resonance_in * self.params.resonance_atten.read();
 
         // Implements a state variable multifilter.
         // Ref: DAFX, Section 2.2, pg 35
@@ -77,5 +136,57 @@ impl Module for VCF {
         self.last_out[Self::HIPASS_OUT] = outputs[Self::HIPASS_OUT];
         self.last_out[Self::BANDPASS_OUT] = outputs[Self::BANDPASS_OUT];
         self.last_out[Self::LOWPASS_OUT] = outputs[Self::LOWPASS_OUT];
+    }
+}
+
+struct VcfPanel(Arc<VcfParams>);
+
+impl Panel for VcfPanel {
+    fn width(&self) -> usize {
+        8
+    }
+
+    fn update(&mut self, handle: &module::ModuleHandle, ui: &mut egui::Ui) {
+        ui.heading("VCF");
+        ui.add_space(20.0);
+        ui.columns(2, |columns| {
+            columns[0].vertical_centered(|ui| {
+                ui.add(Knob::frequency(&self.0.cutoff));
+                ui.add(SignalFlow::down_arrow());
+                ui.small("Cutoff");
+                ui.add(SignalFlow::up_arrow());
+                ui.add(Knob::attenuverter(&self.0.cutoff_atten));
+                ui.add(SignalFlow::join_vertical());
+                ui.add(Jack::input(handle.input(VcfUnit::CUTOFF_IN)));
+            });
+            columns[1].vertical_centered(|ui| {
+                ui.add(Knob::new(&self.0.resonance).range(0.5..=5.0));
+                ui.add(SignalFlow::down_arrow());
+                ui.small("Resonance");
+                ui.add(SignalFlow::up_arrow());
+                ui.add(Knob::attenuverter(&self.0.resonance_atten));
+                ui.add(SignalFlow::join_vertical());
+                ui.add(Jack::input(handle.input(VcfUnit::RESONANCE_IN)));
+            });
+        });
+        ui.add_space(187.0);
+        ui.add(Jack::input(handle.input(VcfUnit::AUDIO_IN)));
+        ui.add(SignalFlow::join_vertical());
+        jack::outputs(ui, |ui| {
+            ui.columns(3, |columns| {
+                columns[0].vertical_centered(|ui| {
+                    ui.small("LO");
+                    ui.add(Jack::output(handle.output(VcfUnit::LOWPASS_OUT)));
+                });
+                columns[1].vertical_centered(|ui| {
+                    ui.small("BND");
+                    ui.add(Jack::output(handle.output(VcfUnit::BANDPASS_OUT)));
+                });
+                columns[2].vertical_centered(|ui| {
+                    ui.small("HI");
+                    ui.add(Jack::output(handle.output(VcfUnit::HIPASS_OUT)));
+                });
+            });
+        });
     }
 }
