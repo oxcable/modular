@@ -5,7 +5,7 @@ use gui::ModularSynth;
 use module::Module;
 use oscillators::{lfo::Lfo, vco::Vco};
 use rack::Rack;
-use utility_modules::amplifier::Vca;
+use utility_modules::{amplifier::Vca, clock::Clock};
 
 fn main() -> anyhow::Result<()> {
     let window_options = eframe::NativeOptions {
@@ -13,18 +13,21 @@ fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
 
+    let clock = Clock::default();
     let lfo = Lfo::default();
     let vco = Vco::default();
     let vca = Vca::default();
     let vcf = Vcf::default();
 
     let mut rack = Rack::new();
+    let clock_handle = rack.add_module(&clock);
     let lfo_handle = rack.add_module(&lfo);
     let vco_handle = rack.add_module(&vco);
     let vca_handle = rack.add_module(&vca);
     let vcf_handle = rack.add_module(&vcf);
 
     let panels = vec![
+        (clock_handle, clock.create_panel()),
         (lfo_handle, lfo.create_panel()),
         (vco_handle, vco.create_panel()),
         (vca_handle, vca.create_panel()),
