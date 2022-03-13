@@ -5,6 +5,7 @@ use gui::ModularSynth;
 use module::Module;
 use oscillators::{lfo::Lfo, vco::Vco};
 use rack::Rack;
+use sequencer::Sequencer;
 use utility_modules::{amplifier::Vca, clock::Clock, envelope::Adsr};
 
 fn main() -> anyhow::Result<()> {
@@ -14,6 +15,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let clock = Clock::default();
+    let sequencer = Sequencer::default();
     let lfo = Lfo::default();
     let vco = Vco::default();
     let adsr = Adsr::default();
@@ -22,6 +24,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut rack = Rack::new();
     let clock_handle = rack.add_module(&clock);
+    let sequencer_handle = rack.add_module(&sequencer);
     let lfo_handle = rack.add_module(&lfo);
     let vco_handle = rack.add_module(&vco);
     let adsr_handle = rack.add_module(&adsr);
@@ -30,6 +33,7 @@ fn main() -> anyhow::Result<()> {
 
     let panels = vec![
         (clock_handle, clock.create_panel()),
+        (sequencer_handle, sequencer.create_panel()),
         (lfo_handle, lfo.create_panel()),
         (vco_handle, vco.create_panel()),
         (adsr_handle, adsr.create_panel()),

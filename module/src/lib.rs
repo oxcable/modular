@@ -4,7 +4,7 @@
 
 use std::{
     hash::{Hash, Hasher},
-    sync::atomic::Ordering,
+    sync::atomic::{AtomicU8, Ordering},
 };
 
 use eurorack::{utils::Duration, Voltage};
@@ -87,6 +87,16 @@ pub trait Parameter {
     fn write(&self, value: Self::Value);
 }
 
+impl Parameter for AtomicU8 {
+    type Value = u8;
+    fn read(&self) -> Self::Value {
+        self.load(Ordering::Relaxed)
+    }
+    fn write(&self, value: Self::Value) {
+        self.store(value, Ordering::Relaxed)
+    }
+}
+
 impl Parameter for atomic_float::AtomicF32 {
     type Value = f32;
     fn read(&self) -> Self::Value {
@@ -99,11 +109,9 @@ impl Parameter for atomic_float::AtomicF32 {
 
 impl Parameter for Duration {
     type Value = f32;
-
     fn read(&self) -> Self::Value {
         self.seconds()
     }
-
     fn write(&self, value: Self::Value) {
         self.set_seconds(value);
     }

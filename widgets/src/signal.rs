@@ -13,6 +13,13 @@ impl SignalFlow {
         }
     }
 
+    pub fn join_horizontal() -> Self {
+        SignalFlow {
+            direction: Direction::JoinHorizontal,
+            length: 3.0,
+        }
+    }
+
     pub fn down_arrow() -> Self {
         SignalFlow {
             direction: Direction::DownArrow,
@@ -44,6 +51,9 @@ impl Widget for SignalFlow {
                 Direction::JoinVertical => {
                     painter.line_segment([rect.center_bottom(), rect.center_top()], stroke);
                 }
+                Direction::JoinHorizontal => {
+                    painter.line_segment([rect.left_center(), rect.right_center()], stroke);
+                }
                 Direction::UpArrow => {
                     let dir = vec2(0.0, -(self.length + ui.spacing().item_spacing.y));
                     painter.arrow(rect.center_bottom(), dir, stroke);
@@ -61,6 +71,7 @@ impl Widget for SignalFlow {
 #[derive(Copy, Clone, Debug)]
 enum Direction {
     JoinVertical,
+    JoinHorizontal,
     DownArrow,
     UpArrow,
 }
