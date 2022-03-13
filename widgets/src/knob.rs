@@ -127,8 +127,8 @@ impl<'a> Widget for Knob<'a> {
             // Needle:
             let dir = radius * Vec2::angled(LEFT_ANGLE + ARC_LENGTH * normalized_value);
             let mut stroke = widget.fg_stroke;
-            stroke.width = (2.0 * self.scale).max(stroke.width);
-            painter.line_segment([origin + 0.5 * dir, origin + dir], stroke);
+            stroke.width = (3.0 * self.scale).max(1.5).max(stroke.width);
+            painter.line_segment([origin + 0.4 * dir, origin + dir], stroke);
         }
 
         response
