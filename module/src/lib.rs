@@ -7,7 +7,7 @@ use std::{
     sync::atomic::Ordering,
 };
 
-use eurorack::Voltage;
+use eurorack::{utils::Duration, Voltage};
 
 pub trait AudioUnit {
     fn reset(&mut self, sample_rate: usize);
@@ -94,5 +94,17 @@ impl Parameter for atomic_float::AtomicF32 {
     }
     fn write(&self, value: Self::Value) {
         self.store(value, Ordering::Relaxed)
+    }
+}
+
+impl Parameter for Duration {
+    type Value = f32;
+
+    fn read(&self) -> Self::Value {
+        self.seconds()
+    }
+
+    fn write(&self, value: Self::Value) {
+        self.set_seconds(value);
     }
 }

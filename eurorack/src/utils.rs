@@ -1,26 +1,39 @@
+use std::sync::atomic::Ordering;
+
+use atomic_float::AtomicF32;
+
 use crate::{Voltage, CV_VOLTS};
 
 /// A utility for managing sample durations across resets.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Duration {
-    seconds: f32,
-    samples: Option<usize>,
+    sample_rate: AtomicF32,
+    seconds: AtomicF32,
 }
 
 impl Duration {
     pub fn new(seconds: f32) -> Self {
         Duration {
-            seconds,
-            samples: None,
+            sample_rate: AtomicF32::new(0.0),
+            seconds: AtomicF32::new(seconds),
         }
     }
 
-    pub fn reset(&mut self, sample_rate: usize) {
-        self.samples = Some((sample_rate as f32 * self.seconds) as usize);
+    pub fn reset(&self, sample_rate: usize) {
+        self.sample_rate
+            .store(sample_rate as f32, Ordering::Relaxed)
     }
 
-    pub fn samples(&self) -> usize {
-        self.samples.expect("Duration not initialized")
+    pub fn seconds(&self) -> f32 {
+        self.seconds.load(Ordering::Relaxed)
+    }
+
+    pub fn set_seconds(&self, seconds: f32) {
+        self.seconds.store(seconds, Ordering::Relaxed)
+    }
+
+    pub fn to_samples(&self) -> usize {
+        (self.sample_rate.load(Ordering::Relaxed) * self.seconds()) as usize
     }
 }
 
@@ -52,7 +65,7 @@ impl PulseGenerator {
 
     /// Triggers a new pulse.
     pub fn trigger(&mut self) {
-        self.samples_remaining = self.duration.samples();
+        self.samples_remaining = self.duration.to_samples();
     }
 
     /// Ticks the pulse generator, emitting a control voltage

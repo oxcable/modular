@@ -5,7 +5,7 @@ use gui::ModularSynth;
 use module::Module;
 use oscillators::{lfo::Lfo, vco::Vco};
 use rack::Rack;
-use utility_modules::{amplifier::Vca, clock::Clock};
+use utility_modules::{amplifier::Vca, clock::Clock, envelope::Adsr};
 
 fn main() -> anyhow::Result<()> {
     let window_options = eframe::NativeOptions {
@@ -16,6 +16,7 @@ fn main() -> anyhow::Result<()> {
     let clock = Clock::default();
     let lfo = Lfo::default();
     let vco = Vco::default();
+    let adsr = Adsr::default();
     let vca = Vca::default();
     let vcf = Vcf::default();
 
@@ -23,6 +24,7 @@ fn main() -> anyhow::Result<()> {
     let clock_handle = rack.add_module(&clock);
     let lfo_handle = rack.add_module(&lfo);
     let vco_handle = rack.add_module(&vco);
+    let adsr_handle = rack.add_module(&adsr);
     let vca_handle = rack.add_module(&vca);
     let vcf_handle = rack.add_module(&vcf);
 
@@ -30,6 +32,7 @@ fn main() -> anyhow::Result<()> {
         (clock_handle, clock.create_panel()),
         (lfo_handle, lfo.create_panel()),
         (vco_handle, vco.create_panel()),
+        (adsr_handle, adsr.create_panel()),
         (vca_handle, vca.create_panel()),
         (vcf_handle, vcf.create_panel()),
     ];

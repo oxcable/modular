@@ -1,14 +1,64 @@
-use rack::{
+use std::sync::Arc;
+
+use atomic_float::AtomicF32;
+use eurorack::{
     utils::{Duration, SchmittTrigger},
-    voltage::{Voltage, CV_VOLTS, GATE_THRESHOLD_VOLTS},
-    Module, ModuleIO,
+    Voltage, CV_VOLTS, GATE_THRESHOLD_VOLTS,
+};
+use module::{AudioUnit, Module, Panel, Parameter};
+use widgets::{
+    egui::{self, Align, Layout},
+    jack::{self, Jack},
+    knob::Knob,
+    signal::SignalFlow,
 };
 
-pub struct ADSR {
+#[derive(Default)]
+pub struct Adsr {
+    params: Arc<AdsrParams>,
+}
+
+impl Module for Adsr {
+    fn inputs(&self) -> usize {
+        1
+    }
+
+    fn outputs(&self) -> usize {
+        1
+    }
+
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+        Box::new(AdsrUnit {
+            params: self.params.clone(),
+            ..Default::default()
+        })
+    }
+
+    fn create_panel(&self) -> Box<dyn Panel> {
+        Box::new(AdsrPanel(self.params.clone()))
+    }
+}
+
+struct AdsrParams {
     attack: Duration,
     decay: Duration,
-    sustain: f32,
+    sustain: AtomicF32,
     release: Duration,
+}
+
+impl Default for AdsrParams {
+    fn default() -> Self {
+        AdsrParams {
+            attack: Duration::new(0.005),
+            decay: Duration::new(0.1),
+            sustain: AtomicF32::new(0.8),
+            release: Duration::new(0.5),
+        }
+    }
+}
+
+pub struct AdsrUnit {
+    params: Arc<AdsrParams>,
     trigger: SchmittTrigger,
     state: State,
     samples_remaining: Option<usize>,
@@ -16,53 +66,39 @@ pub struct ADSR {
     step: f32,
 }
 
-impl ModuleIO for ADSR {
+impl rack::ModuleIO for AdsrUnit {
     const INPUTS: usize = 1;
     const OUTPUTS: usize = 1;
 }
 
-impl ADSR {
+impl AdsrUnit {
     pub const GATE_IN: usize = 0;
 
     pub const CV_OUT: usize = 0;
 
-    pub fn new(attack_secs: f32, decay_secs: f32, sustain: f32, release_secs: f32) -> Self {
-        ADSR {
-            attack: Duration::new(attack_secs),
-            decay: Duration::new(decay_secs),
-            sustain,
-            release: Duration::new(release_secs),
-            trigger: SchmittTrigger::default(),
-            state: State::Silent,
-            samples_remaining: None,
-            level: 0.0,
-            step: 0.0,
-        }
-    }
-
     fn attack(&mut self) {
-        let attack = self.attack.samples();
+        let attack = self.params.attack.to_samples();
         self.state = State::Attack;
         self.samples_remaining = Some(attack);
         self.step = (1.0 - self.level) / attack as f32;
     }
 
     fn decay(&mut self) {
-        let decay = self.decay.samples();
+        let decay = self.params.decay.to_samples();
         self.state = State::Decay;
         self.samples_remaining = Some(decay);
-        self.step = (self.sustain - self.level) / decay as f32;
+        self.step = (self.params.sustain.read() - self.level) / decay as f32;
     }
 
     fn sustain(&mut self) {
         self.state = State::Sustain;
         self.samples_remaining = None;
-        self.level = self.sustain;
+        self.level = self.params.sustain.read();
         self.step = 0.0;
     }
 
     fn release(&mut self) {
-        let release = self.release.samples();
+        let release = self.params.release.to_samples();
         self.state = State::Release;
         self.samples_remaining = Some(release);
         self.step = -self.level / release as f32;
@@ -76,17 +112,24 @@ impl ADSR {
     }
 }
 
-impl Default for ADSR {
+impl Default for AdsrUnit {
     fn default() -> Self {
-        ADSR::new(0.005, 0.1, 0.8, 0.5)
+        AdsrUnit {
+            params: Arc::new(AdsrParams::default()),
+            trigger: SchmittTrigger::default(),
+            state: State::Silent,
+            samples_remaining: None,
+            level: 0.0,
+            step: 0.0,
+        }
     }
 }
 
-impl Module for ADSR {
+impl AudioUnit for AdsrUnit {
     fn reset(&mut self, sample_rate: usize) {
-        self.attack.reset(sample_rate);
-        self.decay.reset(sample_rate);
-        self.release.reset(sample_rate);
+        self.params.attack.reset(sample_rate);
+        self.params.decay.reset(sample_rate);
+        self.params.release.reset(sample_rate);
     }
 
     fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]) {
@@ -128,4 +171,37 @@ enum State {
     Sustain,
     Release,
     Silent,
+}
+
+struct AdsrPanel(Arc<AdsrParams>);
+
+impl Panel for AdsrPanel {
+    fn width(&self) -> usize {
+        4
+    }
+
+    fn update(&mut self, handle: &module::ModuleHandle, ui: &mut egui::Ui) {
+        ui.heading("ADSR");
+        ui.add_space(20.0);
+        ui.add(Knob::new(&self.0.attack).scale(0.75));
+        ui.small("Attack");
+        ui.add_space(10.0);
+        ui.add(Knob::new(&self.0.decay).scale(0.75));
+        ui.small("Decay");
+        ui.add_space(10.0);
+        ui.add(Knob::new(&self.0.sustain).scale(0.75));
+        ui.small("Sustain");
+        ui.add_space(10.0);
+        ui.add(Knob::new(&self.0.release).scale(0.75));
+        ui.small("Release");
+        ui.add_space(10.0);
+        ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
+            jack::outputs(ui, |ui| {
+                ui.add(Jack::output(handle.output(AdsrUnit::CV_OUT)));
+            });
+            ui.add(SignalFlow::join_vertical());
+            ui.add(Jack::input(handle.input(AdsrUnit::GATE_IN)));
+            ui.label("Gate");
+        });
+    }
 }
