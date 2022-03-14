@@ -100,7 +100,8 @@ impl Cable {
             Stroke::new(5.0, Color32::from_black_alpha(128))
         };
 
-        let sag = vec2(0.0, 0.3 * self.src.distance(self.dst));
+        let dy = (self.src.y - self.dst.y).abs();
+        let sag = vec2(0.0, 0.5 * dy + 30.0);
         let midpoint = self.src + 0.5 * (self.dst - self.src) + sag;
 
         ui.painter()

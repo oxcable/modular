@@ -10,7 +10,7 @@ use utility_modules::{amplifier::Vca, clock::Clock, envelope::Adsr};
 
 fn main() -> anyhow::Result<()> {
     let window_options = eframe::NativeOptions {
-        initial_window_size: Some(vec2(1000.0, 515.0)),
+        initial_window_size: Some(vec2(875.0, 515.0)),
         ..Default::default()
     };
 
