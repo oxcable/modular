@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use eurorack::Voltage;
 use module::{AudioUnit, Module, ModuleHandle, ModuleInput, ModuleOutput};
 
 pub struct Rack {
-    modules: Vec<AudioUnitFacade>,
+    sample_rate: usize,
+    modules: HashMap<ModuleHandle, AudioUnitFacade>,
     patch_cables: Vec<(ModuleOutput, ModuleInput)>,
     output_channel: Option<ModuleOutput>,
 }
@@ -11,7 +14,8 @@ impl Rack {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Rack {
-            modules: Vec::new(),
+            sample_rate: 0,
+            modules: HashMap::new(),
             patch_cables: Vec::new(),
             output_channel: None,
         }
@@ -21,32 +25,48 @@ impl Rack {
         AUDIO_OUTPUT_HANDLE.input(0)
     }
 
+    pub fn add_audio_unit(
+        &mut self,
+        handle: ModuleHandle,
+        inputs: usize,
+        outputs: usize,
+        mut audio_unit: Box<dyn AudioUnit + Send>,
+    ) {
+        audio_unit.reset(self.sample_rate);
+        self.modules.insert(
+            handle,
+            AudioUnitFacade {
+                audio_unit,
+                inputs: vec![None; inputs],
+                outputs: vec![0.0; outputs],
+            },
+        );
+    }
+
     pub fn add_module<M: Module>(&mut self, module: &M) -> ModuleHandle {
-        self.modules.push(AudioUnitFacade {
-            audio_unit: module.create_audio_unit(),
-            inputs: vec![None; module.inputs()],
-            outputs: vec![0.0; module.outputs()],
-        });
-        ModuleHandle(self.modules.len() - 1)
+        let handle = ModuleHandle(self.modules.len());
+        self.add_audio_unit(
+            handle,
+            module.inputs(),
+            module.outputs(),
+            module.create_audio_unit(),
+        );
+        handle
     }
 
     pub fn take_module<M: Module>(&mut self, module: M) -> ModuleHandle {
-        self.modules.push(AudioUnitFacade {
-            audio_unit: module.create_audio_unit(),
-            inputs: vec![None; module.inputs()],
-            outputs: vec![0.0; module.outputs()],
-        });
-        ModuleHandle(self.modules.len() - 1)
+        self.add_module(&module)
     }
 
     pub fn connect(&mut self, src: ModuleOutput, dst: ModuleInput) -> Result<(), RackError> {
         if dst.module == AUDIO_OUTPUT_HANDLE {
             self.output_channel = Some(src);
             Ok(())
-        } else if src.module.0 >= self.modules.len() || dst.module.0 >= self.modules.len() {
+        } else if !self.modules.contains_key(&src.module) || !self.modules.contains_key(&dst.module)
+        {
             Err(RackError::InvalidModule)
-        } else if src.channel >= self.modules[src.module.0].outputs.len()
-            || dst.channel >= self.modules[dst.module.0].inputs.len()
+        } else if src.channel >= self.modules[&src.module].outputs.len()
+            || dst.channel >= self.modules[&dst.module].inputs.len()
         {
             Err(RackError::InvalidChannel)
         } else {
@@ -69,13 +89,14 @@ impl Rack {
             self.patch_cables.swap_remove(i);
             // Reset the destination input, as disconnected inputs do not get
             // updated every tick.
-            self.modules[dst.module.0].inputs[dst.channel] = None;
+            self.modules.get_mut(&dst.module).unwrap().inputs[dst.channel] = None;
             Ok(())
         }
     }
 
     pub fn reset(&mut self, sample_rate: usize) {
-        for module in &mut self.modules {
+        self.sample_rate = sample_rate;
+        for module in self.modules.values_mut() {
             module.audio_unit.reset(sample_rate);
         }
     }
@@ -84,16 +105,16 @@ impl Rack {
         // First propogate voltages through all patch cables. All signals take 1 sample to
         // propogate. This simplifies routing and enables feedback and circular patches.
         for (src, dst) in &self.patch_cables {
-            let v = self.modules[src.module.0].outputs[src.channel];
-            self.modules[dst.module.0].inputs[dst.channel] = Some(v);
+            let v = self.modules[&src.module].outputs[src.channel];
+            self.modules.get_mut(&dst.module).unwrap().inputs[dst.channel] = Some(v);
         }
 
-        for module in &mut self.modules {
+        for module in self.modules.values_mut() {
             module.audio_unit.tick(&module.inputs, &mut module.outputs);
         }
 
         self.output_channel
-            .map_or(0.0, |src| self.modules[src.module.0].outputs[src.channel])
+            .map_or(0.0, |src| self.modules[&src.module].outputs[src.channel])
     }
 }
 

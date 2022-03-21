@@ -5,7 +5,7 @@ use cpal::{
     BufferSize, Stream,
 };
 use eurorack::AUDIO_VOLTS;
-use module::{ModuleInput, ModuleOutput};
+use module::{AudioUnit, ModuleHandle, ModuleInput, ModuleOutput};
 use rack::Rack;
 
 pub struct AudioHost {
@@ -46,6 +46,9 @@ impl AudioHost {
             move |samples: &mut [f32], _: &cpal::OutputCallbackInfo| {
                 while let Ok(msg) = rx.try_recv() {
                     match msg {
+                        AudioMessage::AddModule(handle, inputs, outputs, audio_unit) => {
+                            rack.add_audio_unit(handle, inputs, outputs, audio_unit);
+                        }
                         AudioMessage::ConnectModules(output, input) => {
                             rack.connect(output, input).unwrap();
                         }
@@ -87,8 +90,8 @@ impl Default for AudioHost {
     }
 }
 
-#[derive(Debug)]
 pub enum AudioMessage {
+    AddModule(ModuleHandle, usize, usize, Box<dyn AudioUnit + Send>),
     ConnectModules(ModuleOutput, ModuleInput),
     DisconnectModules(ModuleOutput, ModuleInput),
 }
