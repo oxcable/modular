@@ -9,6 +9,8 @@ use std::{
 
 use eurorack::{utils::Duration, Voltage};
 
+pub mod registry;
+
 pub trait AudioUnit {
     fn reset(&mut self, sample_rate: usize);
     fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]);
