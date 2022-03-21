@@ -2,13 +2,10 @@
 members = [
     "audio_host",
     "eurorack",
-    "filters",
     "gui",
     "module",
-    "oscillators",
+    "modules",
     "rack",
-    "sequencer",
-    "utility_modules",
     "widgets",
     "main",
 ]

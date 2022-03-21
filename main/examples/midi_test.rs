@@ -1,7 +1,6 @@
 use audio_host::AudioHost;
-use oscillators::vco::Vco;
+use modules::{amplifier::Vca, envelope::Adsr, midi::MidiIn, oscillators::Vco};
 use rack::Rack;
-use utility_modules::{amplifier::Vca, envelope::Adsr, midi::MidiIn};
 
 fn main() -> anyhow::Result<()> {
     let mut rack = Rack::new();

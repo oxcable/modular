@@ -1,12 +1,12 @@
 use audio_host::AudioHost;
 use eframe::egui::vec2;
-use filters::Vcf;
 use gui::ModularSynth;
 use module::Module;
-use oscillators::{lfo::Lfo, vco::Vco};
+use modules::{
+    amplifier::Vca, clock::Clock, envelope::Adsr, filters::Vcf, lfo::Lfo, oscillators::Vco,
+    sequencer::Sequencer,
+};
 use rack::Rack;
-use sequencer::Sequencer;
-use utility_modules::{amplifier::Vca, clock::Clock, envelope::Adsr};
 
 fn main() -> anyhow::Result<()> {
     let window_options = eframe::NativeOptions {

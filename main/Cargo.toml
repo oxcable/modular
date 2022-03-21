@@ -7,10 +7,7 @@ edition = "2021"
 audio_host = { path = "../audio_host/" }
 anyhow = "1.0"
 eframe = "0.17.0"
-filters = { path = "../filters/" }
 gui = { path = "../gui/" }
 module = { path = "../module/" }
-oscillators = { path = "../oscillators/" }
+modules = { path = "../modules/" }
 rack = { path = "../rack/" }
-sequencer = { path = "../sequencer/" }
-utility_modules = { path = "../utility_modules/" }

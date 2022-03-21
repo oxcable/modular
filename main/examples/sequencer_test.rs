@@ -1,9 +1,9 @@
 use audio_host::AudioHost;
-use filters::Vcf;
-use oscillators::{lfo::Lfo, vco::Vco};
+use modules::{
+    amplifier::Vca, clock::Clock, envelope::Adsr, filters::Vcf, lfo::Lfo, oscillators::Vco,
+    sequencer::Sequencer,
+};
 use rack::Rack;
-use sequencer::Sequencer;
-use utility_modules::{amplifier::Vca, clock::Clock, envelope::Adsr};
 
 fn main() -> anyhow::Result<()> {
     let mut rack = Rack::new();
