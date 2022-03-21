@@ -8,5 +8,6 @@ audio_host = { path = "../audio_host/" }
 atomic_float = "0.1.0"
 eframe = "0.17.0"
 module = { path = "../module/" }
+modules = { path = "../modules/" }
 rack = { path = "../rack/" }
 widgets = { path = "../widgets/" }

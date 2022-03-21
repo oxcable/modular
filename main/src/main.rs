@@ -3,14 +3,14 @@ use eframe::egui::vec2;
 use gui::ModularSynth;
 use module::Module;
 use modules::{
-    amplifier::Vca, clock::Clock, envelope::Adsr, filters::Vcf, lfo::Lfo, oscillators::Vco,
-    sequencer::Sequencer,
+    amplifier::Vca, builtin_modules, clock::Clock, envelope::Adsr, filters::Vcf, lfo::Lfo,
+    oscillators::Vco, sequencer::Sequencer,
 };
 use rack::Rack;
 
 fn main() -> anyhow::Result<()> {
     let window_options = eframe::NativeOptions {
-        initial_window_size: Some(vec2(875.0, 515.0)),
+        initial_window_size: Some(vec2(875.0, 540.0)),
         ..Default::default()
     };
 
@@ -43,6 +43,6 @@ fn main() -> anyhow::Result<()> {
 
     let mut audio_host = AudioHost::default();
     audio_host.start(rack)?;
-    let app = ModularSynth::new(audio_host, panels);
+    let app = ModularSynth::new(builtin_modules(), audio_host, panels);
     eframe::run_native(Box::new(app), window_options);
 }
