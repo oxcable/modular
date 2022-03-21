@@ -7,5 +7,4 @@ edition = "2021"
 atomic_float = "0.1.0"
 eurorack = { path = "../eurorack/" }
 module = { path = "../module/" }
-rack = { path = "../rack/" }
 widgets = { path = "../widgets/" }

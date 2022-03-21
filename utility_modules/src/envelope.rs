@@ -18,6 +18,11 @@ pub struct Adsr {
     params: Arc<AdsrParams>,
 }
 
+impl Adsr {
+    pub const GATE_IN: usize = 0;
+    pub const CV_OUT: usize = 0;
+}
+
 impl Module for Adsr {
     fn inputs(&self) -> usize {
         1
@@ -30,7 +35,11 @@ impl Module for Adsr {
     fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
         Box::new(AdsrUnit {
             params: self.params.clone(),
-            ..Default::default()
+            trigger: SchmittTrigger::default(),
+            state: State::Silent,
+            samples_remaining: None,
+            level: 0.0,
+            step: 0.0,
         })
     }
 
@@ -57,7 +66,7 @@ impl Default for AdsrParams {
     }
 }
 
-pub struct AdsrUnit {
+struct AdsrUnit {
     params: Arc<AdsrParams>,
     trigger: SchmittTrigger,
     state: State,
@@ -66,16 +75,7 @@ pub struct AdsrUnit {
     step: f32,
 }
 
-impl rack::ModuleIO for AdsrUnit {
-    const INPUTS: usize = 1;
-    const OUTPUTS: usize = 1;
-}
-
 impl AdsrUnit {
-    pub const GATE_IN: usize = 0;
-
-    pub const CV_OUT: usize = 0;
-
     fn attack(&mut self) {
         let attack = self.params.attack.to_samples();
         self.state = State::Attack;
@@ -112,19 +112,6 @@ impl AdsrUnit {
     }
 }
 
-impl Default for AdsrUnit {
-    fn default() -> Self {
-        AdsrUnit {
-            params: Arc::new(AdsrParams::default()),
-            trigger: SchmittTrigger::default(),
-            state: State::Silent,
-            samples_remaining: None,
-            level: 0.0,
-            step: 0.0,
-        }
-    }
-}
-
 impl AudioUnit for AdsrUnit {
     fn reset(&mut self, sample_rate: usize) {
         self.params.attack.reset(sample_rate);
@@ -134,8 +121,8 @@ impl AudioUnit for AdsrUnit {
 
     fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]) {
         // Respond to input gate.
-        let gate = inputs[Self::GATE_IN].unwrap_or(0.0);
-        if self.trigger.detect(inputs[Self::GATE_IN].unwrap_or(0.0)) {
+        let gate = inputs[Adsr::GATE_IN].unwrap_or(0.0);
+        if self.trigger.detect(inputs[Adsr::GATE_IN].unwrap_or(0.0)) {
             self.attack();
         } else if gate < GATE_THRESHOLD_VOLTS {
             match self.state {
@@ -160,7 +147,7 @@ impl AudioUnit for AdsrUnit {
 
         // Compute final output.
         self.level += self.step;
-        outputs[Self::CV_OUT] = CV_VOLTS * self.level;
+        outputs[Adsr::CV_OUT] = CV_VOLTS * self.level;
     }
 }
 
@@ -197,10 +184,10 @@ impl Panel for AdsrPanel {
         ui.add_space(10.0);
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
             jack::outputs(ui, |ui| {
-                ui.add(Jack::output(handle.output(AdsrUnit::CV_OUT)));
+                ui.add(Jack::output(handle.output(Adsr::CV_OUT)));
             });
             ui.add(SignalFlow::join_vertical());
-            ui.add(Jack::input(handle.input(AdsrUnit::GATE_IN)));
+            ui.add(Jack::input(handle.input(Adsr::GATE_IN)));
             ui.label("Gate");
         });
     }

@@ -15,6 +15,27 @@ pub struct Vcf {
     params: Arc<VcfParams>,
 }
 
+impl Vcf {
+    pub const CUTOFF_IN: usize = 0;
+    pub const RESONANCE_IN: usize = 1;
+    pub const AUDIO_IN: usize = 2;
+
+    pub const LOWPASS_OUT: usize = 0;
+    pub const BANDPASS_OUT: usize = 1;
+    pub const HIPASS_OUT: usize = 2;
+
+    pub fn new(cutoff: f32, resonance: f32) -> Self {
+        Vcf {
+            params: Arc::new(VcfParams {
+                cutoff: AtomicF32::new(cutoff),
+                cutoff_atten: AtomicF32::new(1.0),
+                resonance: AtomicF32::new(resonance),
+                resonance_atten: AtomicF32::new(1.0),
+            }),
+        }
+    }
+}
+
 impl Module for Vcf {
     fn inputs(&self) -> usize {
         3
@@ -55,41 +76,10 @@ impl Default for VcfParams {
     }
 }
 
-pub struct VcfUnit {
+struct VcfUnit {
     params: Arc<VcfParams>,
     sample_rate: f32,
     last_out: [Voltage; 3],
-}
-
-// Temporarily re-export the old API/name.
-pub type VCF = VcfUnit;
-impl rack::ModuleIO for VcfUnit {
-    const INPUTS: usize = 3;
-    const OUTPUTS: usize = 3;
-}
-
-impl VcfUnit {
-    pub const CUTOFF_IN: usize = 0;
-    pub const RESONANCE_IN: usize = 1;
-    pub const AUDIO_IN: usize = 2;
-
-    pub const LOWPASS_OUT: usize = 0;
-    pub const BANDPASS_OUT: usize = 1;
-    pub const HIPASS_OUT: usize = 2;
-
-    #[allow(clippy::new_without_default)]
-    pub fn new(cutoff: f32, resonance: f32) -> Self {
-        VcfUnit {
-            params: Arc::new(VcfParams {
-                cutoff: AtomicF32::new(cutoff),
-                cutoff_atten: AtomicF32::new(1.0),
-                resonance: AtomicF32::new(resonance),
-                resonance_atten: AtomicF32::new(1.0),
-            }),
-            sample_rate: 0.0,
-            last_out: [0.0; 3],
-        }
-    }
 }
 
 impl AudioUnit for VcfUnit {
@@ -105,8 +95,8 @@ impl AudioUnit for VcfUnit {
         // so later).
         //
         // Additionally, the current resonance mapping is arbitrary and could use more tuning.
-        let cutoff_in = inputs[Self::CUTOFF_IN].unwrap_or(0.0) / CV_VOLTS * self.sample_rate / 6.0;
-        let resonance_in = inputs[Self::RESONANCE_IN].unwrap_or(0.0);
+        let cutoff_in = inputs[Vcf::CUTOFF_IN].unwrap_or(0.0) / CV_VOLTS * self.sample_rate / 6.0;
+        let resonance_in = inputs[Vcf::RESONANCE_IN].unwrap_or(0.0);
 
         let cutoff = (self.params.cutoff.read() + self.params.cutoff_atten.read() * cutoff_in)
             .clamp(0.0, self.sample_rate / 6.0);
@@ -118,13 +108,13 @@ impl AudioUnit for VcfUnit {
         let f1 = 2.0 * (PI * cutoff / self.sample_rate);
         let q1 = 1.0 / resonance;
 
-        outputs[Self::HIPASS_OUT] = inputs[Self::AUDIO_IN].unwrap_or(0.0)
-            - self.last_out[Self::LOWPASS_OUT]
-            - q1 * self.last_out[Self::BANDPASS_OUT];
-        outputs[Self::BANDPASS_OUT] =
-            f1 * outputs[Self::HIPASS_OUT] + self.last_out[Self::BANDPASS_OUT];
-        outputs[Self::LOWPASS_OUT] =
-            f1 * outputs[Self::BANDPASS_OUT] + self.last_out[Self::LOWPASS_OUT];
+        outputs[Vcf::HIPASS_OUT] = inputs[Vcf::AUDIO_IN].unwrap_or(0.0)
+            - self.last_out[Vcf::LOWPASS_OUT]
+            - q1 * self.last_out[Vcf::BANDPASS_OUT];
+        outputs[Vcf::BANDPASS_OUT] =
+            f1 * outputs[Vcf::HIPASS_OUT] + self.last_out[Vcf::BANDPASS_OUT];
+        outputs[Vcf::LOWPASS_OUT] =
+            f1 * outputs[Vcf::BANDPASS_OUT] + self.last_out[Vcf::LOWPASS_OUT];
 
         // Check for numerical stability in the filter. For now, we use an assert because I want to
         // bubble these up into crashes for testing. Eventually, this should be replaced with hard
@@ -133,9 +123,9 @@ impl AudioUnit for VcfUnit {
             assert!(o.is_finite());
         }
 
-        self.last_out[Self::HIPASS_OUT] = outputs[Self::HIPASS_OUT];
-        self.last_out[Self::BANDPASS_OUT] = outputs[Self::BANDPASS_OUT];
-        self.last_out[Self::LOWPASS_OUT] = outputs[Self::LOWPASS_OUT];
+        self.last_out[Vcf::HIPASS_OUT] = outputs[Vcf::HIPASS_OUT];
+        self.last_out[Vcf::BANDPASS_OUT] = outputs[Vcf::BANDPASS_OUT];
+        self.last_out[Vcf::LOWPASS_OUT] = outputs[Vcf::LOWPASS_OUT];
     }
 }
 
@@ -157,7 +147,7 @@ impl Panel for VcfPanel {
                 ui.add(SignalFlow::up_arrow());
                 ui.add(Knob::attenuverter(&self.0.cutoff_atten));
                 ui.add(SignalFlow::join_vertical());
-                ui.add(Jack::input(handle.input(VcfUnit::CUTOFF_IN)));
+                ui.add(Jack::input(handle.input(Vcf::CUTOFF_IN)));
             });
             columns[1].vertical_centered(|ui| {
                 ui.add(Knob::new(&self.0.resonance).range(0.5..=5.0));
@@ -166,25 +156,25 @@ impl Panel for VcfPanel {
                 ui.add(SignalFlow::up_arrow());
                 ui.add(Knob::attenuverter(&self.0.resonance_atten));
                 ui.add(SignalFlow::join_vertical());
-                ui.add(Jack::input(handle.input(VcfUnit::RESONANCE_IN)));
+                ui.add(Jack::input(handle.input(Vcf::RESONANCE_IN)));
             });
         });
         ui.add_space(187.0);
-        ui.add(Jack::input(handle.input(VcfUnit::AUDIO_IN)));
+        ui.add(Jack::input(handle.input(Vcf::AUDIO_IN)));
         ui.add(SignalFlow::join_vertical());
         jack::outputs(ui, |ui| {
             ui.columns(3, |columns| {
                 columns[0].vertical_centered(|ui| {
                     ui.small("LO");
-                    ui.add(Jack::output(handle.output(VcfUnit::LOWPASS_OUT)));
+                    ui.add(Jack::output(handle.output(Vcf::LOWPASS_OUT)));
                 });
                 columns[1].vertical_centered(|ui| {
                     ui.small("BND");
-                    ui.add(Jack::output(handle.output(VcfUnit::BANDPASS_OUT)));
+                    ui.add(Jack::output(handle.output(Vcf::BANDPASS_OUT)));
                 });
                 columns[2].vertical_centered(|ui| {
                     ui.small("HI");
-                    ui.add(Jack::output(handle.output(VcfUnit::HIPASS_OUT)));
+                    ui.add(Jack::output(handle.output(Vcf::HIPASS_OUT)));
                 });
             });
         });

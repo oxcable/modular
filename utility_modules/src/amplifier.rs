@@ -3,7 +3,6 @@ use std::sync::Arc;
 use atomic_float::AtomicF32;
 use eurorack::{Voltage, CV_VOLTS};
 use module::{AudioUnit, Module, Panel, Parameter};
-use rack::ModuleIO;
 use widgets::{
     egui::{self, Align, Layout},
     jack::{self, Jack},
@@ -16,13 +15,20 @@ pub struct Vca {
     params: Arc<VcaParams>,
 }
 
+impl Vca {
+    pub const AUDIO_IN: usize = 0;
+    pub const CV_IN: usize = 1;
+
+    pub const AUDIO_OUT: usize = 0;
+}
+
 impl Module for Vca {
     fn inputs(&self) -> usize {
-        VcaUnit::INPUTS
+        2
     }
 
     fn outputs(&self) -> usize {
-        VcaUnit::OUTPUTS
+        1
     }
 
     fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
@@ -48,46 +54,21 @@ impl Default for VcaParams {
     }
 }
 
-pub struct VcaUnit(Arc<VcaParams>);
-
-impl ModuleIO for VcaUnit {
-    const INPUTS: usize = 2;
-    const OUTPUTS: usize = 1;
-}
-
-impl VcaUnit {
-    pub const AUDIO_IN: usize = 0;
-    pub const CV_IN: usize = 1;
-
-    pub const AUDIO_OUT: usize = 0;
-
-    fn new(gain_db: f32) -> Self {
-        VcaUnit(Arc::new(VcaParams {
-            gain: AtomicF32::new(10f32.powf(gain_db / 20.0)),
-            gain_atten: AtomicF32::new(1.0),
-        }))
-    }
-}
-
-impl Default for VcaUnit {
-    fn default() -> Self {
-        Self::new(0.0)
-    }
-}
+struct VcaUnit(Arc<VcaParams>);
 
 impl AudioUnit for VcaUnit {
     fn reset(&mut self, _sample_rate: usize) {}
 
     fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]) {
         let mut gain = self.0.gain.read();
-        if let Some(cv_in) = inputs[Self::CV_IN] {
+        if let Some(cv_in) = inputs[Vca::CV_IN] {
             gain *= self.0.gain_atten.read() * cv_in / CV_VOLTS;
         }
-        outputs[Self::AUDIO_OUT] = gain * inputs[Self::AUDIO_IN].unwrap_or(0.0);
+        outputs[Vca::AUDIO_OUT] = gain * inputs[Vca::AUDIO_IN].unwrap_or(0.0);
     }
 }
 
-pub struct VcaPanel(Arc<VcaParams>);
+struct VcaPanel(Arc<VcaParams>);
 
 impl Panel for VcaPanel {
     fn width(&self) -> usize {
@@ -103,13 +84,13 @@ impl Panel for VcaPanel {
         ui.add(SignalFlow::up_arrow());
         ui.add(Knob::attenuverter(&self.0.gain_atten));
         ui.add(SignalFlow::join_vertical());
-        ui.add(Jack::input(handle.input(VcaUnit::CV_IN)));
+        ui.add(Jack::input(handle.input(Vca::CV_IN)));
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
             jack::outputs(ui, |ui| {
-                ui.add(Jack::output(handle.output(VcaUnit::AUDIO_OUT)));
+                ui.add(Jack::output(handle.output(Vca::AUDIO_OUT)));
             });
             ui.add(SignalFlow::join_vertical());
-            ui.add(Jack::input(handle.input(VcaUnit::AUDIO_IN)));
+            ui.add(Jack::input(handle.input(Vca::AUDIO_IN)));
             ui.label("Audio");
         });
     }

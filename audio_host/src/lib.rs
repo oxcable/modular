@@ -4,8 +4,9 @@ use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     BufferSize, Stream,
 };
+use eurorack::AUDIO_VOLTS;
 use module::{ModuleInput, ModuleOutput};
-use rack::{voltage::AUDIO_VOLTS, Rack};
+use rack::Rack;
 
 pub struct AudioHost {
     buffer_size: u32,

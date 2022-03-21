@@ -12,6 +12,11 @@ use widgets::{
 #[derive(Default)]
 pub struct MidiIn {}
 
+impl MidiIn {
+    pub const V_OCT_OUT: usize = 0;
+    pub const GATE_OUT: usize = 1;
+}
+
 impl Module for MidiIn {
     fn inputs(&self) -> usize {
         0
@@ -32,7 +37,7 @@ impl Module for MidiIn {
     }
 }
 
-pub struct MidiInUnit {
+struct MidiInUnit {
     _connection: MidiInputConnection<()>,
     rx: mpsc::Receiver<MidiMessage>,
     active: bool,
@@ -40,16 +45,8 @@ pub struct MidiInUnit {
     voltage: f32,
 }
 
-impl rack::ModuleIO for MidiInUnit {
-    const INPUTS: usize = 0;
-    const OUTPUTS: usize = 2;
-}
-
 impl MidiInUnit {
-    pub const V_OCT_OUT: usize = 0;
-    pub const GATE_OUT: usize = 1;
-
-    pub fn new() -> Result<MidiInUnit, Error> {
+    fn new() -> Result<MidiInUnit, Error> {
         let midi_input = MidiInput::new("utility_modules::midi")?;
         match midi_input.ports().first() {
             Some(port) => {
@@ -97,8 +94,8 @@ impl AudioUnit for MidiInUnit {
         }
 
         // Write out the current midi note.
-        outputs[Self::V_OCT_OUT] = self.voltage;
-        outputs[Self::GATE_OUT] = if self.active { CV_VOLTS } else { 0.0 };
+        outputs[MidiIn::V_OCT_OUT] = self.voltage;
+        outputs[MidiIn::GATE_OUT] = if self.active { CV_VOLTS } else { 0.0 };
     }
 }
 
@@ -113,9 +110,9 @@ impl Panel for MidiInPanel {
         ui.heading("MIDI");
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
             jack::outputs(ui, |ui| {
-                ui.add(Jack::output(handle.output(MidiInUnit::V_OCT_OUT)));
+                ui.add(Jack::output(handle.output(MidiIn::V_OCT_OUT)));
                 ui.small("V/Oct");
-                ui.add(Jack::output(handle.output(MidiInUnit::GATE_OUT)));
+                ui.add(Jack::output(handle.output(MidiIn::GATE_OUT)));
                 ui.small("Gate");
             });
         });

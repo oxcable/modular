@@ -15,6 +15,19 @@ pub struct Sequencer {
     params: Arc<SequencerParams>,
 }
 
+impl Sequencer {
+    pub const TRIGGER_IN: usize = 0;
+    pub const V_OCT_OUT: usize = 0;
+
+    pub fn with_sequence(notes: [u8; 8]) -> Self {
+        let sequencer = Sequencer::default();
+        for (i, n) in notes.iter().enumerate() {
+            sequencer.params.notes[i].write(*n);
+        }
+        sequencer
+    }
+}
+
 impl Module for Sequencer {
     fn inputs(&self) -> usize {
         1
@@ -58,46 +71,21 @@ impl Default for SequencerParams {
     }
 }
 
-pub struct SequencerUnit {
+struct SequencerUnit {
     params: Arc<SequencerParams>,
     trigger: SchmittTrigger,
     position: usize,
-}
-
-impl rack::ModuleIO for SequencerUnit {
-    const INPUTS: usize = 1;
-    const OUTPUTS: usize = 1;
-}
-
-impl SequencerUnit {
-    pub const TRIGGER_IN: usize = 0;
-
-    pub const V_OCT_OUT: usize = 0;
-
-    pub fn new(notes: [u8; SEQUENCE_LENGTH]) -> Self {
-        let mut atomic_notes = <[AtomicU8; 8]>::default();
-        for (i, n) in notes.into_iter().enumerate() {
-            atomic_notes[i] = AtomicU8::new(n);
-        }
-
-        SequencerUnit {
-            params: Arc::new(SequencerParams {
-                notes: atomic_notes,
-            }),
-            trigger: SchmittTrigger::default(),
-            position: notes.len() - 1,
-        }
-    }
 }
 
 impl AudioUnit for SequencerUnit {
     fn reset(&mut self, _sample_rate: usize) {}
 
     fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]) {
-        if self.trigger.detect(inputs[Self::TRIGGER_IN].unwrap_or(0.0)) {
+        let trigger = inputs[Sequencer::TRIGGER_IN].unwrap_or(0.0);
+        if self.trigger.detect(trigger) {
             self.position = (self.position + 1) % SEQUENCE_LENGTH;
         }
-        outputs[Self::V_OCT_OUT] = midi_to_voltage(self.params.notes[self.position].read());
+        outputs[Sequencer::V_OCT_OUT] = midi_to_voltage(self.params.notes[self.position].read());
     }
 }
 
@@ -143,7 +131,7 @@ impl Panel for SequencerPanel {
                 ui.set_width(50.0);
                 ui.vertical_centered(|ui| {
                     ui.small("V/Oct");
-                    ui.add(Jack::output(handle.output(SequencerUnit::V_OCT_OUT)));
+                    ui.add(Jack::output(handle.output(Sequencer::V_OCT_OUT)));
                 });
             });
             ui.add(SignalFlow::join_horizontal());
@@ -151,7 +139,7 @@ impl Panel for SequencerPanel {
                 ui.set_width(50.0);
                 ui.vertical_centered(|ui| {
                     ui.small("Trig");
-                    ui.add(Jack::input(handle.input(SequencerUnit::TRIGGER_IN)));
+                    ui.add(Jack::input(handle.input(Sequencer::TRIGGER_IN)));
                 });
             });
         });

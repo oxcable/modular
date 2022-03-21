@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 cpal = "0.13.4"
 ctrlc = "3.2.1"
+eurorack = { path = "../eurorack/" }
 module = { path = "../module/" }
 rack = { path = "../rack/" }
 thiserror = "1.0.30"

@@ -15,6 +15,15 @@ pub struct Lfo {
     params: Arc<LfoParams>,
 }
 
+impl Lfo {
+    pub const FREQ_IN: usize = 0;
+
+    pub const SINE_OUT: usize = 0;
+    pub const SAW_OUT: usize = 1;
+    pub const SQUARE_OUT: usize = 2;
+    pub const TRI_OUT: usize = 3;
+}
+
 impl Module for Lfo {
     fn inputs(&self) -> usize {
         1
@@ -25,7 +34,11 @@ impl Module for Lfo {
     }
 
     fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
-        Box::new(LfoUnit::with_params(self.params.clone()))
+        Box::new(LfoUnit {
+            params: self.params.clone(),
+            sample_rate: 0.0,
+            phase: 0.0,
+        })
     }
 
     fn create_panel(&self) -> Box<dyn Panel> {
@@ -47,38 +60,10 @@ impl Default for LfoParams {
     }
 }
 
-pub struct LfoUnit {
+struct LfoUnit {
     params: Arc<LfoParams>,
     sample_rate: f32,
     phase: f32,
-}
-
-impl rack::ModuleIO for LfoUnit {
-    const INPUTS: usize = 1;
-    const OUTPUTS: usize = 4;
-}
-
-impl LfoUnit {
-    pub const FREQ_IN: usize = 0;
-
-    pub const SINE_OUT: usize = 0;
-    pub const SAW_OUT: usize = 1;
-    pub const SQUARE_OUT: usize = 2;
-    pub const TRI_OUT: usize = 3;
-
-    pub fn new(frequency: f32) -> Self {
-        LfoUnit::with_params(Arc::new(LfoParams {
-            frequency: AtomicF32::new(frequency),
-        }))
-    }
-
-    fn with_params(params: Arc<LfoParams>) -> Self {
-        LfoUnit {
-            params,
-            sample_rate: 0.0,
-            phase: 0.0,
-        }
-    }
 }
 
 impl AudioUnit for LfoUnit {
@@ -88,13 +73,14 @@ impl AudioUnit for LfoUnit {
 
     fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]) {
         let mut freq = self.params.frequency.read();
-        freq += 20.0 * inputs[Self::FREQ_IN].unwrap_or(0.0) / CV_VOLTS;
+        freq += 20.0 * inputs[Lfo::FREQ_IN].unwrap_or(0.0) / CV_VOLTS;
 
         self.phase = (self.phase + freq / self.sample_rate) % 1.0;
-        outputs[Self::SINE_OUT] = CV_VOLTS * ((2.0 * PI * self.phase).sin() + 1.0) / 2.0;
-        outputs[Self::SAW_OUT] = CV_VOLTS * self.phase;
-        outputs[Self::SQUARE_OUT] = CV_VOLTS * if self.phase < 0.5 { 1.0 } else { 0.0 };
-        outputs[Self::TRI_OUT] = CV_VOLTS
+        outputs[Lfo::SINE_OUT] = CV_VOLTS * ((2.0 * PI * self.phase).sin() + 1.0) / 2.0;
+
+        outputs[Lfo::SAW_OUT] = CV_VOLTS * self.phase;
+        outputs[Lfo::SQUARE_OUT] = CV_VOLTS * if self.phase < 0.5 { 1.0 } else { 0.0 };
+        outputs[Lfo::TRI_OUT] = CV_VOLTS
             * if self.phase < 0.5 {
                 2.0 * self.phase
             } else {
@@ -117,16 +103,16 @@ impl Panel for LfoPanel {
         ui.add_space(20.0);
         ui.add(Knob::new(&self.params.frequency).logarithmic(0.0..=100.0));
         ui.label("Freq");
-        ui.add(Jack::input(handle.input(LfoUnit::FREQ_IN)));
+        ui.add(Jack::input(handle.input(Lfo::FREQ_IN)));
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
             jack::outputs(ui, |ui| {
-                ui.add(Jack::output(handle.output(LfoUnit::TRI_OUT)));
+                ui.add(Jack::output(handle.output(Lfo::TRI_OUT)));
                 ui.add(Icon::triangle_wave());
-                ui.add(Jack::output(handle.output(LfoUnit::SQUARE_OUT)));
+                ui.add(Jack::output(handle.output(Lfo::SQUARE_OUT)));
                 ui.add(Icon::square_wave());
-                ui.add(Jack::output(handle.output(LfoUnit::SAW_OUT)));
+                ui.add(Jack::output(handle.output(Lfo::SAW_OUT)));
                 ui.add(Icon::saw_wave());
-                ui.add(Jack::output(handle.output(LfoUnit::SINE_OUT)));
+                ui.add(Jack::output(handle.output(Lfo::SINE_OUT)));
                 ui.add(Icon::sine_wave());
             });
         });

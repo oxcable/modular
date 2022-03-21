@@ -6,5 +6,4 @@ edition = "2021"
 [dependencies]
 eurorack = { path = "../eurorack/" }
 module = { path = "../module/" }
-rack = { path = "../rack/" }
 widgets = { path = "../widgets/" }

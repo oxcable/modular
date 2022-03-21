@@ -1,22 +1,8 @@
-// Temporarily re-export refactored interfaces:
-pub use eurorack as voltage;
-pub use eurorack::Voltage;
-pub mod utils {
-    pub use eurorack::midi_to_voltage;
-    pub use eurorack::utils::*;
-}
-pub use module::AudioUnit as Module;
-pub use module::{ModuleHandle, ModuleInput, ModuleOutput};
-
-use module::Module as NewModule;
-
-pub trait ModuleIO {
-    const INPUTS: usize;
-    const OUTPUTS: usize;
-}
+use eurorack::Voltage;
+use module::{AudioUnit, Module, ModuleHandle, ModuleInput, ModuleOutput};
 
 pub struct Rack {
-    modules: Vec<ModuleFacade>,
+    modules: Vec<AudioUnitFacade>,
     patch_cables: Vec<(ModuleOutput, ModuleInput)>,
     output_channel: Option<ModuleOutput>,
 }
@@ -35,21 +21,18 @@ impl Rack {
         AUDIO_OUTPUT_HANDLE.input(0)
     }
 
-    pub fn add_module_old<M: Module + ModuleIO + Send + 'static>(
-        &mut self,
-        module: M,
-    ) -> ModuleHandle {
-        self.modules.push(ModuleFacade {
-            module: Box::new(module),
-            inputs: vec![None; M::INPUTS],
-            outputs: vec![0.0; M::OUTPUTS],
+    pub fn add_module<M: Module>(&mut self, module: &M) -> ModuleHandle {
+        self.modules.push(AudioUnitFacade {
+            audio_unit: module.create_audio_unit(),
+            inputs: vec![None; module.inputs()],
+            outputs: vec![0.0; module.outputs()],
         });
         ModuleHandle(self.modules.len() - 1)
     }
 
-    pub fn add_module<M: NewModule>(&mut self, module: &M) -> ModuleHandle {
-        self.modules.push(ModuleFacade {
-            module: module.create_audio_unit(),
+    pub fn take_module<M: Module>(&mut self, module: M) -> ModuleHandle {
+        self.modules.push(AudioUnitFacade {
+            audio_unit: module.create_audio_unit(),
             inputs: vec![None; module.inputs()],
             outputs: vec![0.0; module.outputs()],
         });
@@ -93,7 +76,7 @@ impl Rack {
 
     pub fn reset(&mut self, sample_rate: usize) {
         for module in &mut self.modules {
-            module.module.reset(sample_rate);
+            module.audio_unit.reset(sample_rate);
         }
     }
 
@@ -106,7 +89,7 @@ impl Rack {
         }
 
         for module in &mut self.modules {
-            module.module.tick(&module.inputs, &mut module.outputs);
+            module.audio_unit.tick(&module.inputs, &mut module.outputs);
         }
 
         self.output_channel
@@ -116,8 +99,8 @@ impl Rack {
 
 pub const AUDIO_OUTPUT_HANDLE: ModuleHandle = ModuleHandle(usize::MAX);
 
-struct ModuleFacade {
-    module: Box<dyn Module + Send>,
+struct AudioUnitFacade {
+    audio_unit: Box<dyn AudioUnit + Send>,
     inputs: Vec<Option<Voltage>>,
     outputs: Vec<Voltage>,
 }

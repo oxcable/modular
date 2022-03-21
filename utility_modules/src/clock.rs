@@ -14,6 +14,10 @@ pub struct Clock {
     params: Arc<ClockParams>,
 }
 
+impl Clock {
+    pub const TRIGGER_OUT: usize = 0;
+}
+
 impl Module for Clock {
     fn inputs(&self) -> usize {
         0
@@ -50,30 +54,10 @@ impl Default for ClockParams {
     }
 }
 
-pub struct ClockUnit {
+struct ClockUnit {
     params: Arc<ClockParams>,
     sample_rate: Option<f32>,
     ticks: usize,
-}
-
-impl rack::ModuleIO for ClockUnit {
-    const INPUTS: usize = 0;
-    const OUTPUTS: usize = 1;
-}
-
-impl ClockUnit {
-    pub const TRIGGER_OUT: usize = 0;
-
-    pub fn new(bpm: f32) -> Self {
-        ClockUnit {
-            params: Arc::new(ClockParams {
-                bpm: AtomicF32::new(bpm),
-                ..Default::default()
-            }),
-            sample_rate: None,
-            ticks: 0,
-        }
-    }
 }
 
 impl AudioUnit for ClockUnit {
@@ -87,7 +71,7 @@ impl AudioUnit for ClockUnit {
         let width = (self.params.pulse_width.read() * period as f32) as usize;
 
         self.ticks = (self.ticks + 1) % period;
-        outputs[Self::TRIGGER_OUT] = if self.ticks < width.clamp(1, period - 2) {
+        outputs[Clock::TRIGGER_OUT] = if self.ticks < width.clamp(1, period - 2) {
             CV_VOLTS
         } else {
             0.0
@@ -121,7 +105,7 @@ impl Panel for ClockPanel {
         ui.small("Pulse Width");
         ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
             jack::outputs(ui, |ui| {
-                ui.add(Jack::output(handle.output(ClockUnit::TRIGGER_OUT)));
+                ui.add(Jack::output(handle.output(Clock::TRIGGER_OUT)));
             });
             ui.label("TRIG");
         });

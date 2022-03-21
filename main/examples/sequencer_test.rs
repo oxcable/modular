@@ -1,40 +1,37 @@
 use audio_host::AudioHost;
-use filters::VCF;
-use oscillators::{LFO, VCO};
+use filters::Vcf;
+use oscillators::{lfo::Lfo, vco::Vco};
 use rack::Rack;
-use sequencer::SequencerUnit as Sequencer;
-use utility_modules::{amplifier::VcaUnit as VCA, clock::ClockUnit, envelope::AdsrUnit as ADSR};
+use sequencer::Sequencer;
+use utility_modules::{amplifier::Vca, clock::Clock, envelope::Adsr};
 
 fn main() -> anyhow::Result<()> {
     let mut rack = Rack::new();
 
-    let clock = rack.add_module_old(ClockUnit::new(180.0));
-    let sequencer = rack.add_module_old(Sequencer::new([
+    let clock = rack.take_module(Clock::default());
+    let sequencer = rack.take_module(Sequencer::with_sequence([
         61, 65, 68, 77, 61, 65, 68, 75, // 61, 65, 68, 78, 78, 73, 73, 73,
     ]));
-    let lfo = rack.add_module_old(LFO::new(0.1));
-    let osc = rack.add_module_old(VCO::new());
-    let adsr = rack.add_module_old(ADSR::default());
-    let amp = rack.add_module_old(VCA::default());
-    let filter = rack.add_module_old(VCF::new(1000.0, 2.0));
+    let lfo = rack.take_module(Lfo::default());
+    let osc = rack.take_module(Vco::default());
+    let adsr = rack.take_module(Adsr::default());
+    let amp = rack.take_module(Vca::default());
+    let filter = rack.take_module(Vcf::new(1000.0, 2.0));
 
     rack.connect(
-        clock.output(ClockUnit::TRIGGER_OUT),
+        clock.output(Clock::TRIGGER_OUT),
         sequencer.input(Sequencer::TRIGGER_IN),
     )?;
     rack.connect(
         sequencer.output(Sequencer::V_OCT_OUT),
-        osc.input(VCO::V_OCT_IN),
+        osc.input(Vco::V_OCT_IN),
     )?;
-    rack.connect(
-        clock.output(ClockUnit::TRIGGER_OUT),
-        adsr.input(ADSR::GATE_IN),
-    )?;
-    rack.connect(adsr.output(ADSR::CV_OUT), amp.input(VCA::CV_IN))?;
-    rack.connect(osc.output(VCO::SAW_OUT), amp.input(VCA::AUDIO_IN))?;
-    rack.connect(amp.output(VCA::AUDIO_OUT), filter.input(VCF::AUDIO_IN))?;
-    rack.connect(lfo.output(LFO::TRI_OUT), filter.input(VCF::CUTOFF_IN))?;
-    rack.connect(filter.output(VCF::LOWPASS_OUT), Rack::audio_output())?;
+    rack.connect(clock.output(Clock::TRIGGER_OUT), adsr.input(Adsr::GATE_IN))?;
+    rack.connect(adsr.output(Adsr::CV_OUT), amp.input(Vca::CV_IN))?;
+    rack.connect(osc.output(Vco::SAW_OUT), amp.input(Vca::AUDIO_IN))?;
+    rack.connect(amp.output(Vca::AUDIO_OUT), filter.input(Vcf::AUDIO_IN))?;
+    rack.connect(lfo.output(Lfo::TRI_OUT), filter.input(Vcf::CUTOFF_IN))?;
+    rack.connect(filter.output(Vcf::LOWPASS_OUT), Rack::audio_output())?;
 
     AudioHost::default().run_forever(rack)?;
     Ok(())
