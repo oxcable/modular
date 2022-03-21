@@ -1,4 +1,4 @@
-use audio_host::AudioHost;
+use audio_host::{AudioHost, AudioMessage};
 use eframe::{egui, epi};
 use module::{registry::ModuleRegistry, ModuleHandle, Panel};
 
@@ -16,21 +16,24 @@ pub struct ModularSynth {
 }
 
 impl ModularSynth {
-    pub fn new(
-        registry: ModuleRegistry,
-        audio_host: AudioHost,
-        mut panels: Vec<(ModuleHandle, Box<dyn Panel>)>,
-    ) -> Self {
-        panels.push((
-            rack::AUDIO_OUTPUT_HANDLE,
-            Box::new(panels::AudioOutputPanel),
-        ));
+    pub fn new(registry: ModuleRegistry, audio_host: AudioHost) -> Self {
         ModularSynth {
             registry,
             audio_host,
-            panels,
+            panels: Vec::new(),
             connections: Connections::new(),
         }
+    }
+
+    fn add_module(&mut self, name: String) {
+        let (handle, module) = self.registry.create_module(name).unwrap();
+        self.audio_host.send_message(AudioMessage::AddModule(
+            handle,
+            module.inputs(),
+            module.outputs(),
+            module.create_audio_unit(),
+        ));
+        self.panels.push((handle, module.create_panel()));
     }
 }
 
@@ -54,10 +57,9 @@ impl epi::App for ModularSynth {
                 ui.menu_button("Modules", |ui| {
                     let mut modules = self.registry.all_modules();
                     modules.sort();
-                    for module in modules.into_iter() {
-                        if ui.button(&module).clicked() {
-                            println!("Add module: {}", module);
-                            ui.close_menu();
+                    for name in modules.into_iter() {
+                        if ui.button(&name).clicked() {
+                            self.add_module(name);
                         }
                     }
                 });
@@ -76,6 +78,11 @@ impl epi::App for ModularSynth {
                     for (handle, panel) in &mut self.panels {
                         ui.add(panels::panel_to_widget(handle, panel.as_mut()));
                     }
+                    // Always add audio output as the last panel.
+                    ui.add(panels::panel_to_widget(
+                        &rack::AUDIO_OUTPUT_HANDLE,
+                        &mut panels::AudioOutputPanel,
+                    ));
                 });
                 self.connections.update(&self.audio_host, ui);
             });

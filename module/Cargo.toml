@@ -7,3 +7,4 @@ edition = "2021"
 atomic_float = "0.1.0"
 egui = "0.17.0"
 eurorack = { path = "../eurorack/" }
+thiserror = "1.0.30"
