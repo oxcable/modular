@@ -1,5 +1,5 @@
-// We must manually implememnt hash on Module{Input,Output} to include their type ID; otherwise they
-// hash to the same value. This implememntion is still consistent with the derived PartialEq.
+// We must manually implement hash on Module{Input,Output} to include their type ID; otherwise they
+// hash to the same value. This implemention is still consistent with the derived PartialEq.
 #![allow(clippy::derive_hash_xor_eq)]
 
 use std::{
