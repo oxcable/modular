@@ -25,8 +25,8 @@ impl ModularSynth {
         }
     }
 
-    fn add_module(&mut self, name: String) {
-        let (handle, module) = self.registry.create_module(name).unwrap();
+    fn add_module(&mut self, id: String) {
+        let (handle, module) = self.registry.create_module(id).unwrap();
         self.audio_host.send_message(AudioMessage::AddModule(
             handle,
             module.inputs(),
@@ -56,10 +56,10 @@ impl epi::App for ModularSynth {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("Modules", |ui| {
                     let mut modules = self.registry.all_modules();
-                    modules.sort();
-                    for name in modules.into_iter() {
-                        if ui.button(&name).clicked() {
-                            self.add_module(name);
+                    modules.sort_by_key(|m| m.name.clone());
+                    for manifest in modules.into_iter() {
+                        if ui.button(manifest.name).clicked() {
+                            self.add_module(manifest.id);
                         }
                     }
                 });
