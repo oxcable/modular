@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 audio_host = { path = "../audio_host/" }
-atomic_float = "0.1.0"
+portable-atomic = { version = "0.2.1", features = ["float"] }
 eframe = "0.17.0"
 module = { path = "../module/" }
 modules = { path = "../modules/" }

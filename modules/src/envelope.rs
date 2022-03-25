@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use atomic_float::AtomicF32;
 use eurorack::{
     utils::{Duration, SchmittTrigger},
     Voltage, CV_VOLTS, GATE_THRESHOLD_VOLTS,
 };
 use module::{AudioUnit, Module, Panel, Parameter};
+use portable_atomic::AtomicF32;
 use widgets::{
     egui::{self, Align, Layout},
     jack::{self, Jack},

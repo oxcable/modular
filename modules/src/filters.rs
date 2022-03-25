@@ -1,8 +1,8 @@
 use std::{f32::consts::PI, sync::Arc};
 
-use atomic_float::AtomicF32;
 use eurorack::{Voltage, CV_VOLTS};
 use module::{AudioUnit, Module, Panel, Parameter};
+use portable_atomic::AtomicF32;
 use widgets::{
     egui,
     jack::{self, Jack},

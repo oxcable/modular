@@ -1,6 +1,6 @@
 use std::sync::atomic::Ordering;
 
-use atomic_float::AtomicF32;
+use portable_atomic::AtomicF32;
 
 use crate::{Voltage, CV_VOLTS};
 

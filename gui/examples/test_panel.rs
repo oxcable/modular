@@ -1,9 +1,9 @@
 use eframe::egui;
 
-use atomic_float::AtomicF32;
 use audio_host::AudioHost;
 use gui::ModularSynth;
 use module::{ModuleHandle, Panel, Parameter};
+use portable_atomic::AtomicF32;
 use widgets::{
     icons::Icon,
     jack::{self, Jack},

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-atomic_float = "0.1.0"
 egui = "0.17.0"
 eurorack = { path = "../eurorack/" }
+portable-atomic = { version = "0.2.1", features = ["float"] }
 thiserror = "1.0.30"

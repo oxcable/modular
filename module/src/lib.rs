@@ -99,7 +99,7 @@ impl Parameter for AtomicU8 {
     }
 }
 
-impl Parameter for atomic_float::AtomicF32 {
+impl Parameter for portable_atomic::AtomicF32 {
     type Value = f32;
     fn read(&self) -> Self::Value {
         self.load(Ordering::Relaxed)

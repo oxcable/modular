@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-atomic_float = "0.1.0"
+portable-atomic = { version = "0.2.1", features = ["float"] }
