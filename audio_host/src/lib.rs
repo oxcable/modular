@@ -91,7 +91,7 @@ impl Default for AudioHost {
 }
 
 pub enum AudioMessage {
-    AddModule(ModuleHandle, usize, usize, Box<dyn AudioUnit + Send>),
+    AddModule(ModuleHandle, usize, usize, Box<dyn AudioUnit>),
     ConnectModules(ModuleOutput, ModuleInput),
     DisconnectModules(ModuleOutput, ModuleInput),
 }

@@ -27,7 +27,7 @@ impl Module for Clock {
         1
     }
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(ClockUnit {
             params: self.params.clone(),
             sample_rate: None,

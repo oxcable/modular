@@ -26,7 +26,7 @@ impl Module for MidiIn {
         2
     }
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         // TODO: We should figure out how to actually do error handling for this; we probably don't
         // want panics in this function.
         Box::new(MidiInUnit::new().expect("couldn't connect to midi device"))

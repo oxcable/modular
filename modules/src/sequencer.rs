@@ -37,7 +37,7 @@ impl Module for Sequencer {
         1
     }
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(SequencerUnit {
             params: self.params.clone(),
             trigger: SchmittTrigger::default(),

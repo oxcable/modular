@@ -11,7 +11,7 @@ use eurorack::{utils::Duration, Voltage};
 
 pub mod registry;
 
-pub trait AudioUnit {
+pub trait AudioUnit: Send {
     fn reset(&mut self, sample_rate: usize);
     fn tick(&mut self, inputs: &[Option<Voltage>], outputs: &mut [Voltage]);
 }
@@ -25,7 +25,7 @@ pub trait Module {
     fn inputs(&self) -> usize;
     fn outputs(&self) -> usize;
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send>;
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit>;
     fn create_panel(&self) -> Box<dyn Panel>;
 }
 

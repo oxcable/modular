@@ -30,7 +30,7 @@ impl Rack {
         handle: ModuleHandle,
         inputs: usize,
         outputs: usize,
-        mut audio_unit: Box<dyn AudioUnit + Send>,
+        mut audio_unit: Box<dyn AudioUnit>,
     ) {
         audio_unit.reset(self.sample_rate);
         self.modules.insert(
@@ -121,7 +121,7 @@ impl Rack {
 pub const AUDIO_OUTPUT_HANDLE: ModuleHandle = ModuleHandle(usize::MAX);
 
 struct AudioUnitFacade {
-    audio_unit: Box<dyn AudioUnit + Send>,
+    audio_unit: Box<dyn AudioUnit>,
     inputs: Vec<Option<Voltage>>,
     outputs: Vec<Voltage>,
 }

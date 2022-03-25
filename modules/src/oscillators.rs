@@ -26,7 +26,7 @@ impl Module for Vco {
         3
     }
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(VcoUnit {
             phase: 0.0,
             phase_delta: 0.0,

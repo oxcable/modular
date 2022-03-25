@@ -32,7 +32,7 @@ impl Module for Adsr {
         1
     }
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(AdsrUnit {
             params: self.params.clone(),
             trigger: SchmittTrigger::default(),

@@ -45,7 +45,7 @@ impl Module for Vcf {
         3
     }
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(VcfUnit {
             params: self.params.clone(),
             sample_rate: 0.0,

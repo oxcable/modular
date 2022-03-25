@@ -31,7 +31,7 @@ impl Module for Vca {
         1
     }
 
-    fn create_audio_unit(&self) -> Box<dyn AudioUnit + Send> {
+    fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(VcaUnit(self.params.clone()))
     }
 
