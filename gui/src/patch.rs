@@ -4,20 +4,49 @@ use ::widgets::jack::JackInteraction;
 use audio_host::{AudioHost, AudioMessage};
 use eframe::egui::*;
 use eframe::epaint::QuadraticBezierShape;
-use module::{ModuleInput, ModuleOutput};
+use module::{Module, ModuleHandle, ModuleInput, ModuleOutput, Panel};
 
-pub(crate) struct Connections {
+use crate::panels;
+
+pub(crate) struct Patch {
+    modules: Vec<ModuleInstance>,
     connections: Vec<Connection>,
 }
 
-impl Connections {
+impl Patch {
     pub(crate) fn new() -> Self {
-        Connections {
+        Patch {
+            modules: Vec::new(),
             connections: Vec::new(),
         }
     }
 
+    pub(crate) fn add_module(&mut self, id: String, handle: ModuleHandle, module: Box<dyn Module>) {
+        self.modules.push(ModuleInstance {
+            id,
+            handle,
+            panel: module.create_panel(),
+        });
+    }
+
     pub(crate) fn update(&mut self, host: &AudioHost, ui: &mut Ui) {
+        // Draw panels.
+        ScrollArea::horizontal().show(ui, |ui| {
+            ui.horizontal(|ui| {
+                for module in &mut self.modules {
+                    ui.add(panels::panel_to_widget(
+                        &module.handle,
+                        module.panel.as_mut(),
+                    ));
+                }
+                // Always add audio output as the last panel.
+                ui.add(panels::panel_to_widget(
+                    &rack::AUDIO_OUTPUT_HANDLE,
+                    &mut panels::AudioOutputPanel,
+                ));
+            });
+        });
+
         // Handle any interactions from Jack widgets:
         let mut pending_source = None;
         if let Some(interaction) = JackInteraction::get(ui) {
@@ -112,6 +141,13 @@ impl Cable {
                 stroke,
             )));
     }
+}
+
+struct ModuleInstance {
+    #[allow(dead_code)]
+    id: String,
+    handle: ModuleHandle,
+    panel: Box<dyn Panel>,
 }
 
 #[derive(Copy, Clone, Debug)]

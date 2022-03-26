@@ -1,18 +1,17 @@
 use audio_host::{AudioHost, AudioMessage};
 use eframe::{egui, epi};
-use module::{registry::ModuleRegistry, ModuleHandle, Panel};
+use module::registry::ModuleRegistry;
 
-mod connections;
 mod fonts;
 mod panels;
+mod patch;
 
-use crate::connections::Connections;
+use crate::patch::Patch;
 
 pub struct ModularSynth {
     registry: ModuleRegistry,
-    panels: Vec<(ModuleHandle, Box<dyn Panel>)>,
     audio_host: AudioHost,
-    connections: Connections,
+    patch: Patch,
 }
 
 impl ModularSynth {
@@ -20,20 +19,19 @@ impl ModularSynth {
         ModularSynth {
             registry,
             audio_host,
-            panels: Vec::new(),
-            connections: Connections::new(),
+            patch: Patch::new(),
         }
     }
 
     fn add_module(&mut self, id: String) {
-        let (handle, module) = self.registry.create_module(id).unwrap();
+        let (handle, module) = self.registry.create_module(&id).unwrap();
         self.audio_host.send_message(AudioMessage::AddModule(
             handle,
             module.inputs(),
             module.outputs(),
             module.create_audio_unit(),
         ));
-        self.panels.push((handle, module.create_panel()));
+        self.patch.add_module(id, handle, module);
     }
 }
 
@@ -73,19 +71,7 @@ impl epi::App for ModularSynth {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::horizontal().show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    for (handle, panel) in &mut self.panels {
-                        ui.add(panels::panel_to_widget(handle, panel.as_mut()));
-                    }
-                    // Always add audio output as the last panel.
-                    ui.add(panels::panel_to_widget(
-                        &rack::AUDIO_OUTPUT_HANDLE,
-                        &mut panels::AudioOutputPanel,
-                    ));
-                });
-                self.connections.update(&self.audio_host, ui);
-            });
+            self.patch.update(&self.audio_host, ui);
         });
     }
 }

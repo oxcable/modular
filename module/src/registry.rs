@@ -10,7 +10,7 @@ pub struct ModuleManifest {
 
 #[derive(Default)]
 pub struct ModuleRegistry {
-    modules: HashMap<String, ModuleEntry>,
+    modules: HashMap<String, RegisteredModule>,
     next_handle: usize,
 }
 
@@ -25,7 +25,7 @@ impl ModuleRegistry {
     {
         self.modules.insert(
             id.to_owned(),
-            ModuleEntry {
+            RegisteredModule {
                 manifest: ModuleManifest {
                     id: id.to_owned(),
                     name: name.to_owned(),
@@ -37,19 +37,19 @@ impl ModuleRegistry {
 
     pub fn create_module(
         &mut self,
-        id: String,
+        id: &str,
     ) -> Result<(ModuleHandle, Box<dyn Module>), RegistryError> {
-        if let Some(entry) = self.modules.get(&id) {
+        if let Some(entry) = self.modules.get(id) {
             let handle = ModuleHandle(self.next_handle);
             self.next_handle += 1;
             Ok((handle, (entry.factory)()))
         } else {
-            Err(RegistryError::NotRegistered(id))
+            Err(RegistryError::NotRegistered(id.to_owned()))
         }
     }
 }
 
-struct ModuleEntry {
+struct RegisteredModule {
     manifest: ModuleManifest,
     factory: Box<dyn Fn() -> Box<dyn Module>>,
 }
