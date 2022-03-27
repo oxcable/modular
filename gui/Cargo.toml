@@ -9,5 +9,8 @@ portable-atomic = { version = "0.2.1", features = ["float"] }
 eframe = "0.17.0"
 module = { path = "../module/" }
 modules = { path = "../modules/" }
+native-dialog = "0.6.3"
 rack = { path = "../rack/" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 widgets = { path = "../widgets/" }

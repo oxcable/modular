@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use std::{collections::HashMap, fs::File, hash::Hash, path::Path};
 
 use ::widgets::jack::JackInteraction;
 use audio_host::{AudioHost, AudioMessage};
@@ -27,6 +27,32 @@ impl Patch {
             handle,
             panel: module.create_panel(),
         });
+    }
+
+    pub(crate) fn save<P: AsRef<Path>>(&self, path: P) {
+        let mut handle_indices: HashMap<ModuleHandle, usize> = self
+            .modules
+            .iter()
+            .enumerate()
+            .map(|(i, inst)| (inst.handle, i))
+            .collect();
+        handle_indices.insert(rack::AUDIO_OUTPUT_HANDLE, rack::AUDIO_OUTPUT_HANDLE.0);
+
+        let mut serialized = SerializedPatch::default();
+        for module in &self.modules {
+            serialized.modules.push(module.id.clone());
+        }
+        for connection in &self.connections {
+            serialized.connections.push(SerializedConnection {
+                src_index: handle_indices[&connection.output.module],
+                src_channel: connection.output.channel,
+                dst_index: handle_indices[&connection.input.module],
+                dst_channel: connection.input.channel,
+            });
+        }
+
+        let file = File::create(path).unwrap();
+        serde_json::to_writer_pretty(file, &serialized).unwrap();
     }
 
     pub(crate) fn update(&mut self, host: &AudioHost, ui: &mut Ui) {
@@ -144,7 +170,6 @@ impl Cable {
 }
 
 struct ModuleInstance {
-    #[allow(dead_code)]
     id: String,
     handle: ModuleHandle,
     panel: Box<dyn Panel>,
@@ -154,6 +179,20 @@ struct ModuleInstance {
 struct Connection {
     output: ModuleOutput,
     input: ModuleInput,
+}
+
+#[derive(Default, Debug, serde::Serialize, serde::Deserialize)]
+struct SerializedPatch {
+    modules: Vec<String>,
+    connections: Vec<SerializedConnection>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct SerializedConnection {
+    src_index: usize,
+    src_channel: usize,
+    dst_index: usize,
+    dst_channel: usize,
 }
 
 fn locate<T>(ui: &Ui, io: T) -> Option<Pos2>

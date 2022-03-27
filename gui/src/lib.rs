@@ -1,6 +1,7 @@
 use audio_host::{AudioHost, AudioMessage};
 use eframe::{egui, epi};
 use module::registry::ModuleRegistry;
+use native_dialog::FileDialog;
 
 mod fonts;
 mod panels;
@@ -33,6 +34,16 @@ impl ModularSynth {
         ));
         self.patch.add_module(id, handle, module);
     }
+
+    fn save_patch(&mut self) {
+        if let Ok(Some(path)) = FileDialog::new()
+            .add_filter("JSON", &["json"])
+            .set_location("./patches")
+            .show_save_single_file()
+        {
+            self.patch.save(path);
+        }
+    }
 }
 
 impl epi::App for ModularSynth {
@@ -59,6 +70,12 @@ impl epi::App for ModularSynth {
                         if ui.button(manifest.name).clicked() {
                             self.add_module(manifest.id);
                         }
+                    }
+                });
+                ui.menu_button("Patches", |ui| {
+                    if ui.button("Save patch...").clicked() {
+                        self.save_patch();
+                        ui.close_menu();
                     }
                 });
                 ui.menu_button("Debug", |ui| {
