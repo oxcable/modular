@@ -4,7 +4,7 @@ use ::widgets::jack::JackInteraction;
 use audio_host::{AudioHost, AudioMessage};
 use eframe::egui::*;
 use eframe::epaint::QuadraticBezierShape;
-use module::{Module, ModuleHandle, ModuleInput, ModuleOutput, Panel};
+use module::{registry::ModuleRegistry, ModuleHandle, ModuleInput, ModuleOutput, Panel};
 
 use crate::panels;
 
@@ -21,12 +21,25 @@ impl Patch {
         }
     }
 
-    pub(crate) fn add_module(&mut self, id: String, handle: ModuleHandle, module: Box<dyn Module>) {
+    pub(crate) fn add_module(
+        &mut self,
+        registry: &mut ModuleRegistry,
+        audio_host: &AudioHost,
+        id: String,
+    ) -> ModuleHandle {
+        let (handle, module) = registry.create_module(&id).unwrap();
+        audio_host.send_message(AudioMessage::AddModule(
+            handle,
+            module.inputs(),
+            module.outputs(),
+            module.create_audio_unit(),
+        ));
         self.modules.push(ModuleInstance {
             id,
             handle,
             panel: module.create_panel(),
         });
+        handle
     }
 
     pub(crate) fn save<P: AsRef<Path>>(&self, path: P) {

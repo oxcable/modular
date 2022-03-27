@@ -1,4 +1,4 @@
-use audio_host::{AudioHost, AudioMessage};
+use audio_host::AudioHost;
 use eframe::{egui, epi};
 use module::registry::ModuleRegistry;
 use native_dialog::FileDialog;
@@ -25,14 +25,8 @@ impl ModularSynth {
     }
 
     fn add_module(&mut self, id: String) {
-        let (handle, module) = self.registry.create_module(&id).unwrap();
-        self.audio_host.send_message(AudioMessage::AddModule(
-            handle,
-            module.inputs(),
-            module.outputs(),
-            module.create_audio_unit(),
-        ));
-        self.patch.add_module(id, handle, module);
+        self.patch
+            .add_module(&mut self.registry, &self.audio_host, id);
     }
 
     fn save_patch(&mut self) {
