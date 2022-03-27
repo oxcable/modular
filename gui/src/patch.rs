@@ -49,7 +49,7 @@ impl Patch {
             .enumerate()
             .map(|(i, inst)| (inst.handle, i))
             .collect();
-        handle_indices.insert(rack::AUDIO_OUTPUT_HANDLE, rack::AUDIO_OUTPUT_HANDLE.0);
+        handle_indices.insert(rack::AUDIO_OUTPUT_HANDLE, handle_indices.len());
 
         let mut serialized = SerializedPatch::default();
         for module in &self.modules {
@@ -66,6 +66,39 @@ impl Patch {
 
         let file = File::create(path).unwrap();
         serde_json::to_writer_pretty(file, &serialized).unwrap();
+    }
+
+    pub(crate) fn load<P: AsRef<Path>>(
+        &mut self,
+        registry: &mut ModuleRegistry,
+        audio_host: &AudioHost,
+        path: P,
+    ) {
+        // This is meant to load from scratch, but I haven't implemented any module removal yet, so
+        // we must assert that its empty before loading.
+        assert!(self.modules.is_empty());
+
+        let file = File::open(path).unwrap();
+        let serialized: SerializedPatch = serde_json::from_reader(file).unwrap();
+
+        let mut handles = Vec::new();
+        for id in &serialized.modules {
+            handles.push(self.add_module(registry, audio_host, id.clone()));
+        }
+        handles.push(rack::AUDIO_OUTPUT_HANDLE);
+
+        for connection in &serialized.connections {
+            let output = ModuleOutput {
+                module: handles[connection.src_index],
+                channel: connection.src_channel,
+            };
+            let input = ModuleInput {
+                module: handles[connection.dst_index],
+                channel: connection.dst_channel,
+            };
+            audio_host.send_message(AudioMessage::ConnectModules(output, input));
+            self.connections.push(Connection { output, input });
+        }
     }
 
     pub(crate) fn update(&mut self, host: &AudioHost, ui: &mut Ui) {

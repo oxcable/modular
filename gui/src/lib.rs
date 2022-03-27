@@ -38,6 +38,16 @@ impl ModularSynth {
             self.patch.save(path);
         }
     }
+
+    fn load_patch(&mut self) {
+        if let Ok(Some(path)) = FileDialog::new()
+            .add_filter("JSON", &["json"])
+            .set_location("./patches")
+            .show_open_single_file()
+        {
+            self.patch.load(&mut self.registry, &self.audio_host, path);
+        }
+    }
 }
 
 impl epi::App for ModularSynth {
@@ -69,6 +79,10 @@ impl epi::App for ModularSynth {
                 ui.menu_button("Patches", |ui| {
                     if ui.button("Save patch...").clicked() {
                         self.save_patch();
+                        ui.close_menu();
+                    }
+                    if ui.button("Load patch...").clicked() {
+                        self.load_patch();
                         ui.close_menu();
                     }
                 });
