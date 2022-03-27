@@ -65,6 +65,13 @@ impl epi::App for ModularSynth {
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
+        use egui::{Key, Modifiers};
+        if ctx.input_mut().consume_key(Modifiers::COMMAND, Key::S) {
+            self.save_patch();
+        } else if ctx.input_mut().consume_key(Modifiers::COMMAND, Key::O) {
+            self.load_patch();
+        }
+
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("Modules", |ui| {
