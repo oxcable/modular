@@ -4,7 +4,10 @@ use ::widgets::jack::JackInteraction;
 use audio_host::{AudioHost, AudioMessage};
 use eframe::egui::*;
 use eframe::epaint::QuadraticBezierShape;
-use module::{registry::ModuleRegistry, ModuleHandle, ModuleInput, ModuleOutput, Panel};
+use module::{
+    registry::ModuleRegistry, Module, ModuleHandle, ModuleInput, ModuleOutput, Panel,
+    SerializedParameter,
+};
 
 use crate::panels;
 
@@ -38,6 +41,7 @@ impl Patch {
             id,
             handle,
             panel: module.create_panel(),
+            module,
         });
         handle
     }
@@ -53,7 +57,10 @@ impl Patch {
 
         let mut serialized = SerializedPatch::default();
         for module in &self.modules {
-            serialized.modules.push(module.id.clone());
+            serialized.modules.push(SerializedModule {
+                id: module.id.clone(),
+                params: module.module.serialize(),
+            });
         }
         for connection in &self.connections {
             serialized.connections.push(SerializedConnection {
@@ -82,8 +89,13 @@ impl Patch {
         let serialized: SerializedPatch = serde_json::from_reader(file).unwrap();
 
         let mut handles = Vec::new();
-        for id in &serialized.modules {
-            handles.push(self.add_module(registry, audio_host, id.clone()));
+        for module in &serialized.modules {
+            handles.push(self.add_module(registry, audio_host, module.id.clone()));
+            self.modules
+                .last()
+                .unwrap()
+                .module
+                .deserialize(&module.params);
         }
         handles.push(rack::AUDIO_OUTPUT_HANDLE);
 
@@ -218,6 +230,7 @@ impl Cable {
 struct ModuleInstance {
     id: String,
     handle: ModuleHandle,
+    module: Box<dyn Module>,
     panel: Box<dyn Panel>,
 }
 
@@ -229,8 +242,15 @@ struct Connection {
 
 #[derive(Default, Debug, serde::Serialize, serde::Deserialize)]
 struct SerializedPatch {
-    modules: Vec<String>,
+    modules: Vec<SerializedModule>,
     connections: Vec<SerializedConnection>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct SerializedModule {
+    id: String,
+    #[serde(flatten)]
+    params: HashMap<String, SerializedParameter>,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]

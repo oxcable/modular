@@ -1,7 +1,12 @@
-use std::sync::{atomic::AtomicU8, Arc};
+#![allow(clippy::needless_range_loop)]
+
+use std::{
+    collections::HashMap,
+    sync::{atomic::AtomicU8, Arc},
+};
 
 use eurorack::{midi_to_voltage, utils::SchmittTrigger, Voltage};
-use module::{AudioUnit, Module, Panel, Parameter};
+use module::*;
 use widgets::{
     egui::{self, Layout, Slider},
     jack::{self, Jack},
@@ -47,6 +52,27 @@ impl Module for Sequencer {
 
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(SequencerPanel(self.params.clone()))
+    }
+
+    fn serialize(&self) -> HashMap<String, SerializedParameter> {
+        HashMap::from([(
+            "notes".to_owned(),
+            SerializedParameter::List(
+                self.params
+                    .notes
+                    .iter()
+                    .map(|n| Box::new(Parameter::serialize(n)))
+                    .collect(),
+            ),
+        )])
+    }
+
+    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
+        if let SerializedParameter::List(notes) = &params["notes"] {
+            for i in 0..SEQUENCE_LENGTH {
+                self.params.notes[i].deserialize(&notes[i]);
+            }
+        }
     }
 }
 

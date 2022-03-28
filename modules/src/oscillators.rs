@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use eurorack::{Voltage, AUDIO_VOLTS, V_OCT_F0};
 use module::{AudioUnit, Module, Panel};
 use widgets::{
@@ -37,6 +39,12 @@ impl Module for Vco {
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(VcoPanel {})
     }
+
+    fn serialize(&self) -> HashMap<String, module::SerializedParameter> {
+        HashMap::new()
+    }
+
+    fn deserialize(&self, _params: &HashMap<String, module::SerializedParameter>) {}
 }
 
 struct VcoUnit {

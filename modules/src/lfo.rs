@@ -1,7 +1,7 @@
-use std::{f32::consts::PI, sync::Arc};
+use std::{collections::HashMap, f32::consts::PI, sync::Arc};
 
 use eurorack::{Voltage, CV_VOLTS};
-use module::{AudioUnit, Module, Panel, Parameter};
+use module::*;
 use portable_atomic::AtomicF32;
 use widgets::{
     egui::{self, Align, Layout},
@@ -45,6 +45,14 @@ impl Module for Lfo {
         Box::new(LfoPanel {
             params: self.params.clone(),
         })
+    }
+
+    fn serialize(&self) -> HashMap<String, SerializedParameter> {
+        HashMap::from([("frequency".to_owned(), self.params.frequency.serialize())])
+    }
+
+    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
+        self.params.frequency.deserialize(&params["frequency"]);
     }
 }
 

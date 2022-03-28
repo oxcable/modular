@@ -1,10 +1,10 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use eurorack::{
     utils::{Duration, SchmittTrigger},
     Voltage, CV_VOLTS, GATE_THRESHOLD_VOLTS,
 };
-use module::{AudioUnit, Module, Panel, Parameter};
+use module::*;
 use portable_atomic::AtomicF32;
 use widgets::{
     egui::{self, Align, Layout},
@@ -45,6 +45,22 @@ impl Module for Adsr {
 
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(AdsrPanel(self.params.clone()))
+    }
+
+    fn serialize(&self) -> HashMap<String, SerializedParameter> {
+        HashMap::from([
+            ("attack".to_owned(), self.params.attack.serialize()),
+            ("decay".to_owned(), self.params.decay.serialize()),
+            ("sustain".to_owned(), self.params.sustain.serialize()),
+            ("release".to_owned(), self.params.release.serialize()),
+        ])
+    }
+
+    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
+        self.params.attack.deserialize(&params["attack"]);
+        self.params.decay.deserialize(&params["decay"]);
+        self.params.sustain.deserialize(&params["sustain"]);
+        self.params.release.deserialize(&params["release"]);
     }
 }
 

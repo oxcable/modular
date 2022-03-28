@@ -1,4 +1,4 @@
-use std::sync::mpsc;
+use std::{collections::HashMap, sync::mpsc};
 
 use eurorack::{midi_to_voltage, Voltage, CV_VOLTS};
 use midir::{MidiInput, MidiInputConnection};
@@ -35,6 +35,12 @@ impl Module for MidiIn {
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(MidiInPanel {})
     }
+
+    fn serialize(&self) -> HashMap<String, module::SerializedParameter> {
+        HashMap::new()
+    }
+
+    fn deserialize(&self, _params: &HashMap<String, module::SerializedParameter>) {}
 }
 
 struct MidiInUnit {

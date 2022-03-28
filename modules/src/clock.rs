@@ -1,7 +1,7 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use eurorack::{Voltage, CV_VOLTS};
-use module::{AudioUnit, Module, Panel, Parameter};
+use module::*;
 use portable_atomic::AtomicF32;
 use widgets::{
     egui::{self, Align, Layout},
@@ -37,6 +37,21 @@ impl Module for Clock {
 
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(ClockPanel(self.params.clone()))
+    }
+
+    fn serialize(&self) -> HashMap<String, SerializedParameter> {
+        HashMap::from([
+            ("bpm".to_owned(), self.params.bpm.serialize()),
+            (
+                "pulse_width".to_owned(),
+                self.params.pulse_width.serialize(),
+            ),
+        ])
+    }
+
+    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
+        self.params.bpm.deserialize(&params["bpm"]);
+        self.params.pulse_width.deserialize(&params["pulse_width"]);
     }
 }
 
