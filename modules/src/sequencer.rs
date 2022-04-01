@@ -55,21 +55,15 @@ impl Module for Sequencer {
     }
 
     fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        HashMap::from([(
-            "notes".to_owned(),
-            SerializedParameter::List(self.params.notes.iter().map(Parameter::serialize).collect()),
-        )])
+        self.params.serialize()
     }
 
     fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        if let SerializedParameter::List(notes) = &params["notes"] {
-            for i in 0..SEQUENCE_LENGTH {
-                self.params.notes[i].deserialize(&notes[i]);
-            }
-        }
+        self.params.deserialize(params);
     }
 }
 
+#[derive(Parameters)]
 struct SequencerParams {
     notes: [AtomicU8; SEQUENCE_LENGTH],
 }

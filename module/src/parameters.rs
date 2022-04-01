@@ -2,6 +2,8 @@ use std::sync::atomic::{AtomicU8, Ordering};
 
 use eurorack::utils::Duration;
 
+pub use module_derive::Parameters;
+
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum SerializedParameter {

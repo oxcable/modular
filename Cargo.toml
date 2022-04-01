@@ -4,6 +4,7 @@ members = [
     "eurorack",
     "gui",
     "module",
+    "module-derive",
     "modules",
     "rack",
     "widgets",

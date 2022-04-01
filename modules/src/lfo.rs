@@ -48,14 +48,15 @@ impl Module for Lfo {
     }
 
     fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        HashMap::from([("frequency".to_owned(), self.params.frequency.serialize())])
+        self.params.serialize()
     }
 
     fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.frequency.deserialize(&params["frequency"]);
+        self.params.deserialize(params);
     }
 }
 
+#[derive(Parameters)]
 struct LfoParams {
     frequency: AtomicF32,
 }

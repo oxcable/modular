@@ -12,7 +12,7 @@ use eurorack::Voltage;
 pub mod parameters;
 pub mod registry;
 
-pub use parameters::{Parameter, SerializedParameter};
+pub use parameters::{Parameter, Parameters, SerializedParameter};
 
 pub trait AudioUnit: Send {
     fn reset(&mut self, sample_rate: usize);

@@ -48,22 +48,15 @@ impl Module for Adsr {
     }
 
     fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        HashMap::from([
-            ("attack".to_owned(), self.params.attack.serialize()),
-            ("decay".to_owned(), self.params.decay.serialize()),
-            ("sustain".to_owned(), self.params.sustain.serialize()),
-            ("release".to_owned(), self.params.release.serialize()),
-        ])
+        self.params.serialize()
     }
 
     fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.attack.deserialize(&params["attack"]);
-        self.params.decay.deserialize(&params["decay"]);
-        self.params.sustain.deserialize(&params["sustain"]);
-        self.params.release.deserialize(&params["release"]);
+        self.params.deserialize(params)
     }
 }
 
+#[derive(Parameters)]
 struct AdsrParams {
     attack: Duration,
     decay: Duration,

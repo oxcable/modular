@@ -40,18 +40,15 @@ impl Module for Vca {
     }
 
     fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        HashMap::from([
-            ("gain".to_owned(), self.params.gain.serialize()),
-            ("gain_atten".to_owned(), self.params.gain_atten.serialize()),
-        ])
+        self.params.serialize()
     }
 
     fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.gain.deserialize(&params["gain"]);
-        self.params.gain_atten.deserialize(&params["gain_atten"]);
+        self.params.deserialize(params)
     }
 }
 
+#[derive(Parameters)]
 struct VcaParams {
     gain: AtomicF32,
     gain_atten: AtomicF32,

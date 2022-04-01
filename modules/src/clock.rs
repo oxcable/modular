@@ -40,21 +40,15 @@ impl Module for Clock {
     }
 
     fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        HashMap::from([
-            ("bpm".to_owned(), self.params.bpm.serialize()),
-            (
-                "pulse_width".to_owned(),
-                self.params.pulse_width.serialize(),
-            ),
-        ])
+        self.params.serialize()
     }
 
     fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.bpm.deserialize(&params["bpm"]);
-        self.params.pulse_width.deserialize(&params["pulse_width"]);
+        self.params.deserialize(params);
     }
 }
 
+#[derive(Parameters)]
 struct ClockParams {
     bpm: AtomicF32,
     pulse_width: AtomicF32,
