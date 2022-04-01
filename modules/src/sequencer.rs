@@ -1,9 +1,6 @@
 #![allow(clippy::needless_range_loop)]
 
-use std::{
-    collections::HashMap,
-    sync::{atomic::AtomicU8, Arc},
-};
+use std::sync::{atomic::AtomicU8, Arc};
 
 use eurorack::{midi_to_voltage, utils::SchmittTrigger, Voltage};
 use module::*;
@@ -42,6 +39,10 @@ impl Module for Sequencer {
         1
     }
 
+    fn params(&self) -> Option<&dyn Parameters> {
+        Some(self.params.as_ref())
+    }
+
     fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(SequencerUnit {
             params: self.params.clone(),
@@ -52,14 +53,6 @@ impl Module for Sequencer {
 
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(SequencerPanel(self.params.clone()))
-    }
-
-    fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        self.params.serialize()
-    }
-
-    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.deserialize(params);
     }
 }
 

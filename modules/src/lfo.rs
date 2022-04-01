@@ -1,4 +1,4 @@
-use std::{collections::HashMap, f32::consts::PI, sync::Arc};
+use std::{f32::consts::PI, sync::Arc};
 
 use eurorack::{Voltage, CV_VOLTS};
 use module::*;
@@ -33,6 +33,10 @@ impl Module for Lfo {
         4
     }
 
+    fn params(&self) -> Option<&dyn Parameters> {
+        Some(self.params.as_ref())
+    }
+
     fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(LfoUnit {
             params: self.params.clone(),
@@ -45,14 +49,6 @@ impl Module for Lfo {
         Box::new(LfoPanel {
             params: self.params.clone(),
         })
-    }
-
-    fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        self.params.serialize()
-    }
-
-    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.deserialize(params);
     }
 }
 

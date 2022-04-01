@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use eurorack::{Voltage, CV_VOLTS};
 use module::*;
@@ -31,20 +31,16 @@ impl Module for Vca {
         1
     }
 
+    fn params(&self) -> Option<&dyn Parameters> {
+        Some(self.params.as_ref())
+    }
+
     fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(VcaUnit(self.params.clone()))
     }
 
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(VcaPanel(self.params.clone()))
-    }
-
-    fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        self.params.serialize()
-    }
-
-    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.deserialize(params)
     }
 }
 

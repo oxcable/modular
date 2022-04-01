@@ -57,9 +57,13 @@ impl Patch {
 
         let mut serialized = SerializedPatch::default();
         for module in &self.modules {
+            let params = match module.module.params() {
+                Some(params) => params.serialize(),
+                _ => HashMap::new(),
+            };
             serialized.modules.push(SerializedModule {
                 id: module.id.clone(),
-                params: module.module.serialize(),
+                params,
             });
         }
         for connection in &self.connections {
@@ -91,11 +95,9 @@ impl Patch {
         let mut handles = Vec::new();
         for module in &serialized.modules {
             handles.push(self.add_module(registry, audio_host, module.id.clone()));
-            self.modules
-                .last()
-                .unwrap()
-                .module
-                .deserialize(&module.params);
+            if let Some(params) = self.modules.last().unwrap().module.params() {
+                params.deserialize(&module.params);
+            }
         }
         handles.push(rack::AUDIO_OUTPUT_HANDLE);
 

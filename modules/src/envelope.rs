@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use eurorack::{
     utils::{Duration, SchmittTrigger},
@@ -32,6 +32,10 @@ impl Module for Adsr {
         1
     }
 
+    fn params(&self) -> Option<&dyn Parameters> {
+        Some(self.params.as_ref())
+    }
+
     fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(AdsrUnit {
             params: self.params.clone(),
@@ -45,14 +49,6 @@ impl Module for Adsr {
 
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(AdsrPanel(self.params.clone()))
-    }
-
-    fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        self.params.serialize()
-    }
-
-    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.deserialize(params)
     }
 }
 

@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use eurorack::{Voltage, AUDIO_VOLTS, V_OCT_F0};
-use module::{AudioUnit, Module, Panel};
+use module::*;
 use widgets::{
     egui::{self, Align, Layout},
     icons::Icon,
@@ -28,6 +26,10 @@ impl Module for Vco {
         3
     }
 
+    fn params(&self) -> Option<&dyn Parameters> {
+        None
+    }
+
     fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(VcoUnit {
             phase: 0.0,
@@ -39,12 +41,6 @@ impl Module for Vco {
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(VcoPanel {})
     }
-
-    fn serialize(&self) -> HashMap<String, module::SerializedParameter> {
-        HashMap::new()
-    }
-
-    fn deserialize(&self, _params: &HashMap<String, module::SerializedParameter>) {}
 }
 
 struct VcoUnit {

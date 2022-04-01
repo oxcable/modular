@@ -1,9 +1,9 @@
-use std::{collections::HashMap, sync::mpsc};
+use std::sync::mpsc;
 
 use eurorack::{midi_to_voltage, Voltage, CV_VOLTS};
 use midir::{MidiInput, MidiInputConnection};
 use midly::{live::LiveEvent, MidiMessage};
-use module::{AudioUnit, Module, Panel};
+use module::*;
 use widgets::{
     egui::{self, Align, Layout},
     jack::{self, Jack},
@@ -26,6 +26,10 @@ impl Module for MidiIn {
         2
     }
 
+    fn params(&self) -> Option<&dyn Parameters> {
+        None
+    }
+
     fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         // TODO: We should figure out how to actually do error handling for this; we probably don't
         // want panics in this function.
@@ -35,12 +39,6 @@ impl Module for MidiIn {
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(MidiInPanel {})
     }
-
-    fn serialize(&self) -> HashMap<String, module::SerializedParameter> {
-        HashMap::new()
-    }
-
-    fn deserialize(&self, _params: &HashMap<String, module::SerializedParameter>) {}
 }
 
 struct MidiInUnit {

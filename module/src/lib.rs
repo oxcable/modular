@@ -12,7 +12,8 @@ use eurorack::Voltage;
 pub mod parameters;
 pub mod registry;
 
-pub use parameters::{Parameter, Parameters, SerializedParameter};
+pub use module_derive::Parameters;
+pub use parameters::{Parameter, SerializedParameter};
 
 pub trait AudioUnit: Send {
     fn reset(&mut self, sample_rate: usize);
@@ -24,15 +25,21 @@ pub trait Panel {
     fn update(&mut self, handle: &ModuleHandle, ui: &mut egui::Ui);
 }
 
+pub trait Parameters {
+    fn serialize(&self) -> HashMap<String, SerializedParameter>;
+    fn deserialize(&self, params: &HashMap<String, SerializedParameter>);
+}
+
 pub trait Module {
     fn inputs(&self) -> usize;
     fn outputs(&self) -> usize;
 
+    fn params(&self) -> Option<&dyn Parameters> {
+        None
+    }
+
     fn create_audio_unit(&self) -> Box<dyn AudioUnit>;
     fn create_panel(&self) -> Box<dyn Panel>;
-
-    fn serialize(&self) -> HashMap<String, SerializedParameter>;
-    fn deserialize(&self, params: &HashMap<String, SerializedParameter>);
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]

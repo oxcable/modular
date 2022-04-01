@@ -1,4 +1,4 @@
-use std::{collections::HashMap, f32::consts::PI, sync::Arc};
+use std::{f32::consts::PI, sync::Arc};
 
 use eurorack::{Voltage, CV_VOLTS};
 use module::*;
@@ -45,6 +45,10 @@ impl Module for Vcf {
         3
     }
 
+    fn params(&self) -> Option<&dyn Parameters> {
+        Some(self.params.as_ref())
+    }
+
     fn create_audio_unit(&self) -> Box<dyn AudioUnit> {
         Box::new(VcfUnit {
             params: self.params.clone(),
@@ -55,14 +59,6 @@ impl Module for Vcf {
 
     fn create_panel(&self) -> Box<dyn Panel> {
         Box::new(VcfPanel(self.params.clone()))
-    }
-
-    fn serialize(&self) -> HashMap<String, SerializedParameter> {
-        self.params.serialize()
-    }
-
-    fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
-        self.params.deserialize(params);
     }
 }
 

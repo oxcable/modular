@@ -49,13 +49,13 @@ pub fn derive_parameter_set(input: TokenStream) -> TokenStream {
     // Generate the serialize/deserialize impls.
     TokenStream::from(quote! {
         #[automatically_derived]
-        impl #struct_name {
-            fn serialize(&self) -> HashMap<String, SerializedParameter> {
-                HashMap::from([
+        impl module::Parameters for #struct_name {
+            fn serialize(&self) -> std::collections::HashMap<String, SerializedParameter> {
+                std::collections::HashMap::from([
                     #(#serializers),*
                 ])
             }
-            fn deserialize(&self, params: &HashMap<String, SerializedParameter>) {
+            fn deserialize(&self, params: &std::collections::HashMap<String, SerializedParameter>) {
                 #(#deserializers)*
             }
         }
