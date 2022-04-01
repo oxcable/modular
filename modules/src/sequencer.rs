@@ -57,13 +57,7 @@ impl Module for Sequencer {
     fn serialize(&self) -> HashMap<String, SerializedParameter> {
         HashMap::from([(
             "notes".to_owned(),
-            SerializedParameter::List(
-                self.params
-                    .notes
-                    .iter()
-                    .map(|n| Box::new(Parameter::serialize(n)))
-                    .collect(),
-            ),
+            SerializedParameter::List(self.params.notes.iter().map(Parameter::serialize).collect()),
         )])
     }
 

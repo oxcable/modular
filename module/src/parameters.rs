@@ -6,7 +6,7 @@ use eurorack::utils::Duration;
 #[serde(untagged)]
 pub enum SerializedParameter {
     Num(f32),
-    List(Vec<Box<SerializedParameter>>),
+    List(Vec<SerializedParameter>),
 }
 
 impl SerializedParameter {
