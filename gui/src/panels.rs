@@ -6,10 +6,10 @@ use widgets::jack::{self, Jack};
 const HP_PIXELS: usize = 20;
 const PANEL_HEIGHT: usize = 25 * HP_PIXELS;
 
-pub(crate) fn panel_to_widget<'a>(
-    handle: &'a ModuleHandle,
-    panel: &'a mut dyn Panel,
-) -> impl egui::Widget + 'a {
+pub(crate) fn panel_to_widget(
+    handle: ModuleHandle,
+    panel: &mut dyn Panel,
+) -> impl egui::Widget + '_ {
     move |ui: &mut egui::Ui| {
         let width = HP_PIXELS * panel.width();
         let desired_size = egui::vec2(width as f32, PANEL_HEIGHT as f32);
@@ -26,7 +26,7 @@ pub(crate) fn panel_to_widget<'a>(
                 rect.shrink(10.0),
                 egui::Layout::top_down(egui::Align::Center),
             );
-            panel.update(handle, &mut panel_ui);
+            panel.update(&handle, &mut panel_ui);
         }
 
         response

@@ -52,25 +52,21 @@ impl Widget for Jack {
         // Interact:
         if response.clicked_by(PointerButton::Primary) {
             use JackInteraction::*;
-            use JackType::*;
             match (self.type_, JackInteraction::get(ui)) {
-                (Output(output), Some(PendingInput(input))) => {
+                (JackType::Output(output), Some(PendingInput(input)))
+                | (JackType::Input(input), Some(PendingOutput(output))) => {
                     CreateConnection(output, input).update(ui);
                 }
-                (Input(input), Some(PendingOutput(output))) => {
-                    CreateConnection(output, input).update(ui);
-                }
-                (Output(output), None) => PendingOutput(output).update(ui),
-                (Input(input), None) => PendingInput(input).update(ui),
+                (JackType::Output(output), None) => PendingOutput(output).update(ui),
+                (JackType::Input(input), None) => PendingInput(input).update(ui),
                 _ => (),
             }
         } else if response.clicked_by(PointerButton::Secondary)
             || (response.hovered() && ui.input().key_pressed(Key::Backspace))
         {
-            use JackInteraction::*;
             match self.type_ {
-                JackType::Output(output) => ClearOutput(output).update(ui),
-                JackType::Input(input) => ClearInput(input).update(ui),
+                JackType::Output(output) => JackInteraction::ClearOutput(output).update(ui),
+                JackType::Input(input) => JackInteraction::ClearInput(input).update(ui),
             }
         }
 
@@ -141,5 +137,5 @@ where
 {
     let id = Id::new(io);
     ui.memory().data.remove::<Pos2>(id);
-    ui.memory().data.insert_temp(id, position)
+    ui.memory().data.insert_temp(id, position);
 }

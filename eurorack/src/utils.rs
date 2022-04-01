@@ -21,7 +21,7 @@ impl Duration {
 
     pub fn reset(&self, sample_rate: usize) {
         self.sample_rate
-            .store(sample_rate as f32, Ordering::Relaxed)
+            .store(sample_rate as f32, Ordering::Relaxed);
     }
 
     pub fn seconds(&self) -> f32 {
@@ -29,7 +29,7 @@ impl Duration {
     }
 
     pub fn set_seconds(&self, seconds: f32) {
-        self.seconds.store(seconds, Ordering::Relaxed)
+        self.seconds.store(seconds, Ordering::Relaxed);
     }
 
     pub fn to_samples(&self) -> usize {

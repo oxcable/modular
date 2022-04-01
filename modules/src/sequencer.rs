@@ -107,7 +107,7 @@ impl Panel for SequencerPanel {
         ui.heading("Sequencer");
         ui.add_space(20.0);
 
-        let mut notes: Vec<u8> = self.0.notes.iter().map(|p| p.read()).collect();
+        let mut notes: Vec<u8> = self.0.notes.iter().map(Parameter::read).collect();
         ui.columns(SEQUENCE_LENGTH / 2, |columns| {
             for i in 0..SEQUENCE_LENGTH / 2 {
                 let i2 = i + SEQUENCE_LENGTH / 2;

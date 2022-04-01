@@ -121,13 +121,13 @@ impl Patch {
             ui.horizontal(|ui| {
                 for module in &mut self.modules {
                     ui.add(panels::panel_to_widget(
-                        &module.handle,
+                        module.handle,
                         module.panel.as_mut(),
                     ));
                 }
                 // Always add audio output as the last panel.
                 ui.add(panels::panel_to_widget(
-                    &rack::AUDIO_OUTPUT_HANDLE,
+                    rack::AUDIO_OUTPUT_HANDLE,
                     &mut panels::AudioOutputPanel,
                 ));
             });

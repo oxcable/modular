@@ -77,7 +77,7 @@ impl epi::App for ModularSynth {
                 ui.menu_button("Modules", |ui| {
                     let mut modules = self.registry.all_modules();
                     modules.sort_by_key(|m| m.name.clone());
-                    for manifest in modules.into_iter() {
+                    for manifest in modules {
                         if ui.button(manifest.name).clicked() {
                             self.add_module(manifest.id);
                         }
