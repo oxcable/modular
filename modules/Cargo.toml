@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 eurorack = { path = "../eurorack/" }
 midir = "0.7.0"
-midly = "0.5.2"
+midly = "0.5.3"
 module = { path = "../module/" }
 portable-atomic = { version = "0.2.1", features = ["float"] }
 thiserror = "1.0"
